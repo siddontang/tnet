@@ -5,7 +5,7 @@ project(TNET)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_definitions(-DLINUX)
 
-elseif(${CMAKE_SYSTEM_NAME} matches "Darwin")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_definitions(-DOSX)
 else()
     message(FATAL_ERROR, "only support linux and mac osx")
