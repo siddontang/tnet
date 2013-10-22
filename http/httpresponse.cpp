@@ -35,7 +35,7 @@ namespace tnet
         string str;
         
         char buf[1024];
-        int n = snprintf(buf, sizeof(buf), "HTTP/1.1 %d %s\r\n", statusCode, httpStatusCodeReason(statusCode));    
+        int n = snprintf(buf, sizeof(buf), "HTTP/1.1 %d %s\r\n", statusCode, HttpUtil::codeReason(statusCode));    
 
         str.append(buf, n);
     

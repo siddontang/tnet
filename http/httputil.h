@@ -1,11 +1,20 @@
 #ifndef _HTTPUTIL_H_
 #define _HTTPUTIL_H_
 
+#include <stdint.h>
+#include <string>
+
 namespace tnet
 {
-    const char* httpStatusCodeReason(int statusCode);    
-
-    const char* httpMethodStr(unsigned char method);
+    class HttpUtil
+    {
+    public:
+        static const char* codeReason(int code);
+        static const char* methodStr(uint8_t method);
+    
+        static std::string escape(const std::string& src);
+        static std::string unescape(const std::string& src);
+    };
 }
 
 #endif

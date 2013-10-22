@@ -4,7 +4,8 @@ set(HTTP_SRCS
     httprequest.cpp
     httpresponse.cpp
     httpserver.cpp
-    httputil.cpp)
+    httputil.cpp
+    httpurl.cpp)
 
 include_directories(${TNET_SOURCE_DIR}/core)
 
