@@ -11,7 +11,7 @@
 #include "threadutil.h"
 #include "connection.h"
 
-namespace tpush 
+namespace tnet 
 {   
     class IOLoop;
     class IOLoopThreadPool;

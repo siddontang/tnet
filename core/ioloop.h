@@ -12,7 +12,7 @@ extern "C"
 
 #include "threadutil.h"
 
-namespace tpush
+namespace tnet
 {
 
     class IOLoop

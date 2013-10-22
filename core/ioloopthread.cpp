@@ -6,7 +6,7 @@
 #include "threadutil.h"
 
 
-namespace tpush
+namespace tnet
 {
 
     IOLoopThread::IOLoopThread()

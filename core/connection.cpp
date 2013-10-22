@@ -15,7 +15,7 @@ using namespace std::tr1::placeholders;
 #define CONN_TIMEOUT 120
 #endif
 
-namespace tpush
+namespace tnet
 {
 
     static int MaxReadBuffer = 1024 * 4;

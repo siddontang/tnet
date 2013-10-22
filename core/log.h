@@ -5,7 +5,7 @@
 
 #include "nocopyable.h"
 
-namespace tpush
+namespace tnet
 {
     class Log : public nocopyable
     {

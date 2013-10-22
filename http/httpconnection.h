@@ -12,7 +12,7 @@ extern "C"
 
 #include "nocopyable.h"
 
-namespace tpush
+namespace tnet
 {
     class Connection;
     class HttpServer;

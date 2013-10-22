@@ -26,9 +26,6 @@ include_directories("./libev")
 
 set(DEP_LIB pthread)
 
-message(STATUS ${CMAKE_BUILD_TYPE})
-message(STATUS ${CMAKE_CXX_FLAGS})
-
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_definitions(-DEV_USE_EVENTFD -DEV_USE_EPOLL)
 

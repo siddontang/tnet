@@ -11,7 +11,7 @@ extern "C"
 
 #include "nocopyable.h"
 
-namespace tpush
+namespace tnet
 {
     //wrapper for ev signal
     

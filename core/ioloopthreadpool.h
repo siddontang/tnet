@@ -3,7 +3,7 @@
 
 #include <vector>
 
-namespace tpush
+namespace tnet
 {
     class IOLoop;
     class IOLoopThread;

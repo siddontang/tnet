@@ -1,6 +1,6 @@
 #include "uricodec.h"
 
-namespace tpush
+namespace tnet
 {
     //refer to http://www.codeguru.com/cpp/cpp/algorithms/strings/article.php/c12759/URI-Encoding-and-Decoding.htm
 

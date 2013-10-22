@@ -12,7 +12,7 @@
 
 using namespace std;
 
-namespace tpush
+namespace tnet
 {
 
     HttpConnection::HttpConnection(const ConnectionPtr_t& conn, HttpServer* server)

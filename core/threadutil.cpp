@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-namespace tpush
+namespace tnet
 {
     Thread::Thread(const ThreadFunc_t& func)
         : m_thread(0)

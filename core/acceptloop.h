@@ -9,7 +9,7 @@ extern "C"
 #include <ev.h>    
 }
 
-namespace tpush
+namespace tnet
 {
     class IOLoop;
     class Address;

@@ -9,7 +9,7 @@
 using namespace std;
 using namespace std::tr1::placeholders;
 
-namespace tpush
+namespace tnet
 {
     const int DefaultMaxHeaderSize = 4 * 1024;
     const int DefaultMaxBodySize = 1024 * 1024;

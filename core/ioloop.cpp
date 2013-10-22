@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace tpush
+namespace tnet
 {
     //for *unix, new fd descriptors is always the smallest positive integer 
     //vector<IOLoop::SocketWatcher*> IOLoop::m_socketWatchers(getdtablesize(), NULL);

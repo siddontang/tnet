@@ -11,7 +11,7 @@ extern "C"
 #include "http_parser.h"    
 }
 
-namespace tpush
+namespace tnet
 {
     class TcpServer;
     class Address;

@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <netinet/in.h>
 
-namespace tpush
+namespace tnet
 {
 
     class Address

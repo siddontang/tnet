@@ -2,7 +2,7 @@
 
 #include "ioloop.h"
 
-namespace tpush
+namespace tnet
 {
 
     Timer::Timer(IOLoop* loop, const TimerFunc_t& func, int repeat, int after)

@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace tpush
+namespace tnet
 {
     Address::Address(uint16_t port)
     {

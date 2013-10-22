@@ -6,7 +6,7 @@
 
 #include "nocopyable.h"
 
-namespace tpush
+namespace tnet
 {
     class Thread : public nocopyable
     {

@@ -9,7 +9,7 @@
 
 using namespace std;
 
-namespace tpush
+namespace tnet
 {
     Acceptor::Acceptor(int maxPoolNum)
     {

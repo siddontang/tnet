@@ -1,7 +1,7 @@
 #ifndef _SOCKUTIL_H_
 #define _SOCKUTIL_H_
 
-namespace tpush
+namespace tnet
 {
     class Address;
     class SockUtil

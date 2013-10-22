@@ -3,7 +3,7 @@
 #include <string.h>
 #include <signal.h>
 
-namespace tpush
+namespace tnet
 {
 #ifdef LINUX
     __thread char errorBuf[64];

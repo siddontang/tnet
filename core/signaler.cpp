@@ -3,7 +3,7 @@
 #include "ioloop.h"
 #include "misc.h"
 
-namespace tpush
+namespace tnet
 {
     Signaler::Signaler(IOLoop* loop)
         : m_loop(loop)

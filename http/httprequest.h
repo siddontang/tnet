@@ -5,7 +5,7 @@
 #include <map>
 #include <stdint.h>
 
-namespace tpush
+namespace tnet
 {
     class HttpRequest
     {

@@ -16,7 +16,7 @@
 #include "misc.h"
 
 using namespace std;
-using namespace tpush;
+using namespace tnet;
 using namespace std::tr1::placeholders;
 
 void sigAction(TcpServer* pServer, int signum)

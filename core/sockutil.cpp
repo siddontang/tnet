@@ -13,7 +13,7 @@
 #include "misc.h"
 #include "log.h"
 
-namespace tpush
+namespace tnet
 {
     int SockUtil::bindAndListen(const Address& addr)
     {

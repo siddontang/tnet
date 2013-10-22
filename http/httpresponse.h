@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 
-namespace tpush
+namespace tnet
 {
     class HttpResponse
     {

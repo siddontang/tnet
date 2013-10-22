@@ -7,7 +7,7 @@
 
 #include "threadutil.h"
 
-namespace tpush
+namespace tnet
 {
 
     static int MaxLogMsg = 1024;

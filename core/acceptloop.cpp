@@ -14,7 +14,7 @@
 
 using namespace std;
 
-namespace tpush
+namespace tnet
 {
 
     AcceptLoop::AcceptLoop(IOLoop* loop)

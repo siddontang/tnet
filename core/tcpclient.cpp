@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace tpush
+namespace tnet
 {
 
 }

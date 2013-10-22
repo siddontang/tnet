@@ -13,7 +13,7 @@ extern "C"
 
 using namespace std;
 
-namespace tpush
+namespace tnet
 {
 
     HttpRequest::HttpRequest()

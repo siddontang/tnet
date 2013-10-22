@@ -1,7 +1,7 @@
 #ifndef _NOCOPYABLE_H_
 #define _NOCOPYABLE_H_
 
-namespace tpush
+namespace tnet
 {
 
     class nocopyable

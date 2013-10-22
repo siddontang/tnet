@@ -22,7 +22,7 @@
 using namespace std;
 using namespace std::tr1::placeholders;
 
-namespace tpush
+namespace tnet
 {
     const int DefaultConnCheckInterval = 10 * 1000;
     const int DefaultConnCheckNum = 2000;

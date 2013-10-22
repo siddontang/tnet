@@ -1,7 +1,7 @@
 #ifndef _HTTPUTIL_H_
 #define _HTTPUTIL_H_
 
-namespace tpush
+namespace tnet
 {
     const char* httpStatusCodeReason(int statusCode);    
 
