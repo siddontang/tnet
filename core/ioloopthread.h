@@ -1,6 +1,8 @@
 #ifndef _IOLOOPTHREAD_H_
 #define _IOLOOPTHREAD_H_
 
+#include <string>
+
 #include "nocopyable.h"
 
 namespace tnet
@@ -11,7 +13,7 @@ namespace tnet
     class IOLoopThread : public nocopyable
     {
     public:
-        IOLoopThread();
+        IOLoopThread(const std::string& threadName = "");
         ~IOLoopThread();
 
         IOLoop* getLoop() { return m_ioloop; }

@@ -1,6 +1,7 @@
 #ifndef _THREADUTIL_H_
 #define _THREADUTIL_H_
 
+#include <string>
 #include <pthread.h>
 #include <tr1/functional>
 
@@ -13,7 +14,7 @@ namespace tnet
     public:
         typedef std::tr1::function<void ()> ThreadFunc_t;
 
-        Thread(const ThreadFunc_t& func);
+        Thread(const ThreadFunc_t& func, const std::string& name = "");
         ~Thread();
         
         void start();
@@ -22,6 +23,8 @@ namespace tnet
     private: 
         pthread_t m_thread;   
         ThreadFunc_t m_func;
+    
+        std::string m_name;
     };
 
     class Mutex : public nocopyable

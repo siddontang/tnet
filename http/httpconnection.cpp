@@ -186,7 +186,6 @@ namespace tnet
         }
 
         (m_server->getRequestCallback())(conn, m_request);
-        resetParser();
         return 0;
     }
 

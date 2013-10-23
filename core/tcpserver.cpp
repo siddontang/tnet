@@ -18,16 +18,13 @@
 #include "signaler.h"
 #include "connection.h"
 #include "timer.h"
+#include "connlooppool.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
 
 namespace tnet
 {
-    const int DefaultConnCheckInterval = 10 * 1000;
-    const int DefaultConnCheckNum = 2000;
-    const int DefaultConnTimeout = 60;
-
     TcpServer::TcpServer(int acceptLoopNum, int connLoopNum, int maxConnections)
     {
         assert(maxConnections > 0);
@@ -35,11 +32,10 @@ namespace tnet
 
         m_acceptor = new Acceptor(acceptLoopNum);
 
-        m_connLoops = new IOLoopThreadPool(connLoopNum);
+        m_connPool = new ConnLoopPool(connLoopNum, this);
+        m_connLoops = m_connPool->getLoops();
    
         m_signaler = new Signaler(m_mainLoop);
-
-        initConnCheck();
 
         m_maxConnections = maxConnections;
         m_curConnections = 0;
@@ -48,17 +44,11 @@ namespace tnet
    
         //we prealloc connection vector and never change its size
         m_connections.resize(int(m_maxConnections * 1.5) + 1024);
-   
-        m_connCheckNum = DefaultConnCheckNum;
-    
-        m_maxConnTimeout = DefaultConnTimeout;
     }
     
     TcpServer::~TcpServer()
     {
-        clearContainer(m_connChecker);
-
-        delete m_connLoops;
+        delete m_connPool;
         delete m_acceptor;
 
         delete m_mainLoop;
@@ -66,7 +56,7 @@ namespace tnet
         m_connections.clear();
     }
 
-    void TcpServer::onNewConnection(int sockFd, const ConnEventCallback_t& func)
+    void TcpServer::onNewConnection(int sockFd, const NewConnCallback_t& func)
     {
         int connNum = __sync_add_and_fetch(&m_curConnections, 1);
 
@@ -78,39 +68,22 @@ namespace tnet
             return;    
         }
 
-        IOLoop* loop = m_connLoops->getHashLoop(sockFd);
+        IOLoop* loop = m_connPool->getHashLoop(sockFd);
 
         loop->runTask(std::tr1::bind(&TcpServer::newConnectionInLoop, this, loop, sockFd, func));
     }
 
-    void TcpServer::onConnEvent(const ConnEventCallback_t& func, 
-                                const ConnectionPtr_t& conn, 
-                                Connection::Event event,
-                                const char* buffer, int count)
+    void TcpServer::newConnectionInLoop(IOLoop* loop, int sockFd, const NewConnCallback_t& func)
     {
-        func(conn, event, buffer, count);
+        ConnectionPtr_t conn(new Connection(loop, sockFd, std::tr1::bind(&TcpServer::deleteConnection, this, _1)));
+        m_connections[sockFd] = conn;    
 
-        if(event == Connection::CloseEvent)
-        {
-            deleteConnection(conn);    
-        }
-    }
-
-    void TcpServer::newConnectionInLoop(IOLoop* loop, int sockFd, const ConnEventCallback_t& func)
-    {
-        ConnectionPtr_t conn = m_connections[sockFd];
-        if(!bool(conn))
-        {
-            conn = ConnectionPtr_t(new Connection(loop, sockFd));
-            m_connections[sockFd] = conn;    
-        }
-
-        conn->setCallback(std::tr1::bind(&TcpServer::onConnEvent, this, func, _1, _2, _3, _4));
+        func(conn);
 
         conn->onEstablished();
     }
 
-    void TcpServer::deleteConnection(ConnectionPtr_t conn)
+    void TcpServer::deleteConnection(const ConnectionPtr_t& conn)
     {
         IOLoop* loop = conn->getLoop();
 
@@ -124,7 +97,7 @@ namespace tnet
         }
     }
 
-    void TcpServer::deleteConnectionInLoop(ConnectionPtr_t conn)
+    void TcpServer::deleteConnectionInLoop(const ConnectionPtr_t& conn)
     {
         IOLoop* loop = conn->getLoop();
 
@@ -139,7 +112,7 @@ namespace tnet
     }
 
 
-    int TcpServer::listen(const Address& addr, const ConnEventCallback_t& func)
+    int TcpServer::listen(const Address& addr, const NewConnCallback_t& func)
     {
         LOG_INFO("listen %s:%d", addr.ipstr().c_str(), addr.port());
         return m_acceptor->listen(addr, std::tr1::bind(&TcpServer::onNewConnection, this, _1, func));
@@ -147,12 +120,7 @@ namespace tnet
    
     void TcpServer::setConnLoopIOInterval(int milliseconds)
     {
-        vector<IOLoop*>& loops = m_connLoops->getLoops();
-        
-        for(size_t i = 0; i < loops.size(); i++)
-        {
-            loops[i]->setIOInterval(milliseconds);    
-        }
+        m_connPool->setIOInterval(milliseconds);
     }
     
     void TcpServer::addSignal(int signum, const SignalFunc_t& func)
@@ -160,88 +128,24 @@ namespace tnet
         m_signaler->add(signum, func);   
     }
 
-    void TcpServer::setConnCheckInterval(int milliseconds)
+    void TcpServer::setConnCheckRepeat(int seconds)
     {
-        for(size_t i = 0; i < m_connChecker.size(); ++i)
-        {
-            m_connChecker[i]->reset(milliseconds);    
-        }
-    }
-    
-    void TcpServer::initConnCheck()
-    {
-        vector<IOLoop*>& loops = m_connLoops->getLoops(); 
-        for(size_t i = 0; i < loops.size(); ++i)
-        {
-            m_connChecker.push_back(new Timer(loops[i], 
-                std::tr1::bind(&TcpServer::onConnCheck, this, loops[i], std::tr1::shared_ptr<int>(new int(0))),
-                DefaultConnCheckInterval, DefaultConnTimeout * 1000));    
-        }
+        m_connPool->setConnCheckRepeat(seconds);    
     }
 
-    void TcpServer::startConnCheck()
+    void TcpServer::setConnCheckStep(int step)
     {
-        for(size_t i = 0; i < m_connChecker.size(); ++i)
-        {
-            m_connChecker[i]->start();    
-        }    
+        m_connPool->setConnCheckStep(step);
     }
 
-    void TcpServer::stopConnCheck()
+    void TcpServer::setConnTimeout(int seconds)
     {
-        for(size_t i = 0; i < m_connChecker.size(); ++i)
-        {
-            m_connChecker[i]->stop();    
-        }    
-    }
-
-    void TcpServer::setConnCheckNumOneLoop(int checkNum)
-    {
-        if(checkNum >= int(m_connections.size()))    
-        {
-            checkNum = int(m_connections.size());    
-        }
-
-        m_connCheckNum = checkNum;
-    }
-
-    void TcpServer::onConnCheck(IOLoop* loop, const std::tr1::shared_ptr<void>& content)
-    {
-        std::tr1::shared_ptr<int> num = std::tr1::static_pointer_cast<int>(content); 
-        
-        int lastIndex = *num;
-
-        int index = lastIndex;
-
-        ev_tstamp now = ev_now(loop->evloop()); 
-
-        for(int i = 0; i < m_connCheckNum; ++i, ++index)
-        {
-            int fd = index % m_connections.size();
-            if(fd  == lastIndex && fd != index)
-            {
-                //travel for a loop
-                break;    
-            }
-
-            if(m_connLoops->getHashLoop(fd) == loop)
-            {
-                ConnectionPtr_t conn = m_connections[fd];
-                if(conn && int(now - conn->getLastUpdate()) > m_maxConnTimeout) 
-                {
-                    conn->shutDown();    
-                }   
-            }
-        }
-
-        *num = index % m_connections.size();
+        m_connPool->setConnTimeout(seconds);
     }
 
     void TcpServer::start()
     {
-        m_connLoops->start();
-
-        startConnCheck();
+        m_connPool->start();
 
         m_acceptor->start();
 
@@ -254,9 +158,7 @@ namespace tnet
     
         m_acceptor->stop();
     
-        stopConnCheck();
-
-        m_connLoops->stop();
+        m_connPool->stop();
     
         m_mainLoop->stop();
     }

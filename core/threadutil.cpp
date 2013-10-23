@@ -5,11 +5,16 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
+#include "log.h"
+
+using namespace std;
+
 namespace tnet
 {
-    Thread::Thread(const ThreadFunc_t& func)
+    Thread::Thread(const ThreadFunc_t& func, const string& name)
         : m_thread(0)
         , m_func(func)
+        , m_name(name)
     {
     }
 
@@ -24,7 +29,15 @@ namespace tnet
         static void* handle(void* arg)
         {
             ThreadRoutine* routine = static_cast<ThreadRoutine*>(arg);
-            
+            if(!routine->name.empty())
+            {    
+#ifdef LINUX
+                pthread_setname_np(pthread_self(), routine->name.c_str());
+#else
+#endif
+            }
+ 
+
             (routine->func)();
             
             delete routine;
@@ -35,14 +48,16 @@ namespace tnet
         typedef std::tr1::function<void ()> Func_t;
 
         Func_t func;
+        string name;
     };
 
     void Thread::start()
     {
         ThreadRoutine* routine = new ThreadRoutine;
         routine->func = m_func;
-        pthread_create(&m_thread, NULL, &ThreadRoutine::handle, routine);    
-    }
+        routine->name = m_name;
+        pthread_create(&m_thread, NULL, &ThreadRoutine::handle, routine);       
+   }
 
     void Thread::stop()
     {

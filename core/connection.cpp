@@ -26,8 +26,9 @@ namespace tnet
     {
     }
 
-    Connection::Connection(IOLoop* loop, int sockFd)
+    Connection::Connection(IOLoop* loop, int sockFd, const ReleaseConnFunc_t& func)
         : m_loop(loop)
+        , m_releaseFunc(func)
     {
         m_status = Connecting;
 
@@ -54,8 +55,6 @@ namespace tnet
         m_io.data = this;
     
         ev_io_start(m_loop->evloop(), &m_io);
-    
-        m_func(shared_from_this(), EstablishedEvent, NULL, 0);
     }
    
     void Connection::shutDown()
@@ -223,6 +222,8 @@ namespace tnet
         m_status = Disconnected;
     
         m_func(shared_from_this(), CloseEvent, NULL, 0);
+    
+        m_releaseFunc(shared_from_this()); 
     }
 
     void Connection::send(const char* data, int dataLen)

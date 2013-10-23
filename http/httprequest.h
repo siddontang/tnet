@@ -14,7 +14,6 @@ namespace tnet
         ~HttpRequest();
 
         void clear();
-        void parseUrl();
 
         std::string url;
         std::string body;

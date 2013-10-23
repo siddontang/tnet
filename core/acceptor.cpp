@@ -1,5 +1,7 @@
 #include "acceptor.h"
 
+#include <tr1/functional>
+
 #include "ioloop.h"
 #include "ioloopthreadpool.h"
 #include "sockutil.h"
@@ -8,12 +10,13 @@
 #include "misc.h"
 
 using namespace std;
+using namespace std::tr1::placeholders;
 
 namespace tnet
 {
     Acceptor::Acceptor(int maxPoolNum)
     {
-        m_loopPool = new IOLoopThreadPool(maxPoolNum);
+        m_loopPool = new IOLoopThreadPool(maxPoolNum, "accept");
     
         for(int i = 0; i < maxPoolNum; i++)
         {
@@ -24,31 +27,28 @@ namespace tnet
 
     Acceptor::~Acceptor()
     {
-        clearContainer(m_loops);
+        for_each_all_delete(m_loops);
         delete m_loopPool;
     }
 
     void Acceptor::start()
     {
         m_loopPool->start();
-        for(size_t i = 0; i < m_loops.size(); i++)
-        {
-            m_loops[i]->start();    
-        }
+        for_each_all(m_loops, std::tr1::bind(&AcceptLoop::start, _1));
     }
 
     void Acceptor::stop()
     {
-        for(size_t i = 0; i < m_loops.size(); i++)
-        {
-            m_loops[i]->stop();    
-        }
+        for_each_all(m_loops, std::tr1::bind(&AcceptLoop::stop, _1));
+        
         m_loopPool->stop();
 
         for(size_t i = 0; i < m_sockFds.size(); i++)
         {
             close(m_sockFds[i]);    
         }
+
+        m_sockFds.clear();
     }
 
     int Acceptor::listen(const Address& addr, const NewConnectionFunc_t& func)
@@ -61,10 +61,12 @@ namespace tnet
 
         m_sockFds.push_back(sockFd);
 
-        for(size_t i = 0; i < m_loops.size(); i++)
-        {
-            m_loops[i]->listen(sockFd, func);
-        }
+        for_each_all(m_loops, std::tr1::bind(&AcceptLoop::listen, _1, sockFd, func));
+
+        //for(size_t i = 0; i < m_loops.size(); i++)
+        //{
+        //   m_loops[i]->listen(sockFd, func);
+        //}
 
         return sockFd;
     }

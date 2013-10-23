@@ -14,6 +14,7 @@ set(CORE_SRCS
     tcpserver.cpp
     threadutil.cpp
     timer.cpp
+    connlooppool.cpp
     )
 
 set(EV_SRCS ./libev/ev.c)
@@ -35,5 +36,7 @@ else()
 endif()
 
 add_library(tnet_core ${CORE_SRCS} ${EV_SRCS})
+
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 target_link_libraries(tnet_core ${DEP_LIB})

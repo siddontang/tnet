@@ -5,12 +5,15 @@ set(HTTP_SRCS
     httpresponse.cpp
     httpserver.cpp
     httputil.cpp
-    httpurl.cpp)
+    httpurl.cpp
+    httpparser.cpp)
 
 include_directories(${TNET_SOURCE_DIR}/core)
 
 add_definitions(-DHTTP_PARSER_STRICT=0)
 
 add_library(tnet_http ${HTTP_SRCS})
+
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 target_link_libraries(tnet_http tnet_core)

@@ -5,6 +5,7 @@
 #include "tcpserver.h"
 #include "httpconnection.h"
 #include "log.h"
+#include "httpparser.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -29,7 +30,7 @@ namespace tnet
         , m_maxBodySize(DefaultMaxBodySize)
     {
         m_func = std::tr1::bind(&dummyRequestCallback, _1, _2);
-        HttpConnection::initParserSettings(&m_parserSettings);
+        HttpParser::initSettings();
     }
    
     HttpServer::~HttpServer()
@@ -39,83 +40,14 @@ namespace tnet
      
     int HttpServer::listen(const Address& addr)
     {
-        return m_server->listen(addr, std::tr1::bind(&HttpServer::onConnEvent, this, _1, _2, _3, _4));     
+        return m_server->listen(addr, std::tr1::bind(&HttpServer::onNewConnection, this, _1));     
     }
 
-    void HttpServer::onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buffer, int count)
+    void HttpServer::onNewConnection(const ConnectionPtr_t& conn)
     {
-        switch(event)
-        {
-            case Connection::ReadEvent:
-                return onConnRead(conn, buffer, count);
-            case Connection::WriteCompleteEvent:
-                return onConnWriteComplete(conn);
-            case Connection::CloseEvent:
-                return onConnClose(conn);
-            case Connection::ErrorEvent:
-                return onConnError(conn);    
-            default:
-                break;
-        }
-    }
-
-    void HttpServer::onConnRead(const ConnectionPtr_t& conn, const char* buffer, int count)
-    {
-        HttpConnectionPtr_t c = std::tr1::static_pointer_cast<HttpConnection>(conn->getUserData());
-        if(!bool(c))
-        {
-            c = HttpConnectionPtr_t(new HttpConnection(conn, this));
-            conn->setUserData(c);
-        }
-
-        struct http_parser* parser = c->getParser();
-
-        int n = http_parser_execute(parser, &m_parserSettings, buffer, count);
-      
-        do
-        {
-            if(n != count)
-            {
-                LOG_ERROR("parser error %s:%s", 
-                    http_errno_name((http_errno)parser->http_errno), \
-                    http_errno_description((http_errno)parser->http_errno));
-                break;
-            } 
-            else if(parser->upgrade)
-            {
-                LOG_ERROR("not support http upgrade protocol");
-                break;
-            }
-
-            //ok here
-            if(c->eof())
-            {
-                //read all http request
-                conn->resetUserData();
-            }
-
-            return;
-
-        }while(0);
-
-        //error here, we will close this connection
-        conn->resetUserData();
+        HttpParserPtr_t parser(new HttpParser(this));
         
-        conn->shutDown();
+        conn->setCallback(std::tr1::bind(&HttpParser::onConnEvent, parser, _1, _2, _3, _4)); 
     }
 
-    void HttpServer::onConnWriteComplete(const ConnectionPtr_t& conn)
-    {
-        
-    }
-
-    void HttpServer::onConnClose(const ConnectionPtr_t& conn)
-    {
-        
-    }
-
-    void HttpServer::onConnError(const ConnectionPtr_t& conn)
-    {
-        
-    }
 }

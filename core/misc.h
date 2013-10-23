@@ -5,20 +5,33 @@
 
 namespace tnet
 {
+    //some function name may like c++ std name
+    struct default_delete
+    {
+        template<typename T>
+        void operator()(T* ptr) const
+        {
+            delete ptr;    
+        }    
+    };
 
-    template<typename T>
-    void clearContainer(T& c)
+    template<typename T, typename Func>
+    void for_each_all(T& c, const Func& func)
     {
         typename T::iterator iter = c.begin();
         while(iter != c.end())
         {
-            delete *iter;
-            ++iter;    
+            func(*iter);    
+            ++iter;
         }
-
-        c.clear();
     }
    
+    template<typename T>
+    void for_each_all_delete(T& c)
+    {
+        for_each_all(c, default_delete());    
+    }
+
     const char* errorMsg(int errorNum); 
 }
 

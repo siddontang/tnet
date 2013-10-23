@@ -25,7 +25,7 @@ namespace tnet
     
     AcceptLoop::~AcceptLoop()
     {
-        clearContainer(m_watchers);
+        for_each_all_delete(m_watchers);
         close(m_dummyFd);
     }
 

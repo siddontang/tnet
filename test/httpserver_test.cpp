@@ -46,11 +46,8 @@ int main()
 {
     //Log::rootLog().setLevel(Log::ERROR);
      
-    TcpServer s(1, 1, 10000);
+    TcpServer s(2, 4, 10000);
 
-    //s.setConnLoopIOInterval(50);
-    s.setMaxConnTimeout(10);
-    
     HttpServer httpd(&s);
 
     httpd.setRequestCallback(std::tr1::bind(&onHandler, _1, _2));

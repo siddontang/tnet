@@ -22,7 +22,6 @@ namespace tnet
     public:
         enum Event
         {
-            EstablishedEvent,
             ReadEvent,
             WriteCompleteEvent,
             ErrorEvent,
@@ -37,32 +36,31 @@ namespace tnet
             Disconnected,
         };
 
-        Connection(IOLoop* loop, int sockFd);
+        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
+        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnectionFunc_t;
+        typedef std::tr1::function<void (const ConnectionPtr_t&)> ReleaseConnFunc_t;
+
+        Connection(IOLoop* loop, int sockFd, const ReleaseConnFunc_t& func);
         ~Connection();    
 
-        void onEstablished();
         void shutDown();
-
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-
-        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnectionFunc_t;
-        void setCallback(const ConnectionFunc_t& func) { m_func = func; }
-
+        
         void send(const char* data, int dataLen);
         void send(const std::string& data);
 
         Status getStatus() { return m_status; }
 
-        int getSockFd() { return m_io.fd; }
+        int getSockFd() { return m_io.fd; } 
 
+        //below are for inner tnet use, but they cannot be private
         IOLoop* getLoop() { return m_loop; }
-  
+        
         ev_tstamp getLastUpdate() { return m_lastUpdate; }
+        
+        void onEstablished();
 
-        typedef std::tr1::shared_ptr<void> UserData_t; 
-        void setUserData(const UserData_t& data) { m_userData = data; }
-        UserData_t getUserData() { return m_userData; } 
-        void resetUserData() { m_userData.reset(); }
+        //not thread safe, must call in loop thread
+        void setCallback(const ConnectionFunc_t& func) { m_func = func; }
 
     private:
         static void onData(struct ev_loop*, struct ev_io*, int);
@@ -86,10 +84,9 @@ namespace tnet
         Status m_status;
         
         ConnectionFunc_t m_func;
-
+        ReleaseConnFunc_t m_releaseFunc;
+    
         std::string m_sendBuffer;
-
-        std::tr1::shared_ptr<void>  m_userData;
     
         ev_tstamp m_lastUpdate;
     };    

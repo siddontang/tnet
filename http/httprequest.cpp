@@ -12,6 +12,8 @@ namespace tnet
 
     HttpRequest::HttpRequest()
     {
+        majorVersion = 1;
+        minorVersion = 1;
     }
    
     HttpRequest::~HttpRequest()
@@ -24,8 +26,8 @@ namespace tnet
         body.clear();
         headers.clear();
         
-        majorVersion = 0;
-        minorVersion = 0;
+        majorVersion = 1;
+        minorVersion = 1;
         method = 0;        
     }
 }

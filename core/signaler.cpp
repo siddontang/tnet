@@ -14,7 +14,7 @@ namespace tnet
     
     Signaler::~Signaler()
     {
-        clearContainer(m_watchers);
+        for_each_all_delete(m_watchers);
     } 
 
     void Signaler::add(int signum, const SignalFunc_t& func)

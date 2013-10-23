@@ -17,6 +17,7 @@ namespace tnet
     class Address;
     class HttpConnection;
     class HttpRequest;
+    class HttpParser;
 
     class HttpServer : public nocopyable
     {
@@ -35,6 +36,7 @@ namespace tnet
         typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
         typedef std::tr1::shared_ptr<HttpConnection> HttpConnectionPtr_t;
         typedef std::tr1::shared_ptr<HttpRequest> HttpRequestPtr_t;
+        typedef std::tr1::shared_ptr<HttpParser> HttpParserPtr_t;
 
         typedef std::tr1::function<void (const ConnectionPtr_t&, const HttpRequestPtr_t&)> HttpRequestCallback_t;
 
@@ -42,20 +44,14 @@ namespace tnet
         HttpRequestCallback_t& getRequestCallback() { return m_func; }
            
     private:
-        void onConnEvent(const ConnectionPtr_t&, Connection::Event, const char*, int);
 
-        void onConnRead(const ConnectionPtr_t&, const char*, int);
-        void onConnWriteComplete(const ConnectionPtr_t&);
-        void onConnClose(const ConnectionPtr_t&);
-        void onConnError(const ConnectionPtr_t&);
+        void onNewConnection(const ConnectionPtr_t&);
 
     private:
         TcpServer* m_server;
     
         int m_maxHeaderSize;
         int m_maxBodySize;
-    
-        struct http_parser_settings m_parserSettings;
     
         HttpRequestCallback_t  m_func;
     };

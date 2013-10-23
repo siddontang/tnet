@@ -1,15 +1,18 @@
 #include "ioloopthreadpool.h"
 
+#include <tr1/functional>
 #include <assert.h>
 
 #include "ioloopthread.h"
+#include "misc.h"
 
 using namespace std;
+using namespace std::tr1::placeholders;
 
 namespace tnet
 {
 
-    IOLoopThreadPool::IOLoopThreadPool(int num)
+    IOLoopThreadPool::IOLoopThreadPool(int num, const string& threadName)
     {
         assert(num > 0);
         m_threads.resize(num);
@@ -17,7 +20,7 @@ namespace tnet
 
         for(int i = 0; i < num; i++)
         {
-            m_threads[i] = new IOLoopThread();
+            m_threads[i] = new IOLoopThread(threadName);
             m_loops[i] = m_threads[i]->getLoop();        
         }
     }
@@ -25,25 +28,16 @@ namespace tnet
     IOLoopThreadPool::~IOLoopThreadPool()
     {
         m_loops.clear();
-        for(size_t i = 0; i < m_threads.size(); ++i)
-        {
-            delete m_threads[i];
-        }
+        for_each_all_delete(m_threads);
     }
     
     void IOLoopThreadPool::start()
     {
-        for(size_t i = 0; i < m_threads.size(); i++)
-        {
-            m_threads[i]->start();    
-        }
+        for_each_all(m_threads, std::tr1::bind(&IOLoopThread::start, _1));
     }    
 
     void IOLoopThreadPool::stop()
     {
-        for(size_t i = 0; i < m_threads.size(); i++)
-        {
-            m_threads[i]->stop();    
-        }
+        for_each_all(m_threads, std::tr1::bind(&IOLoopThread::stop, _1));
     }
 }
