@@ -23,12 +23,12 @@ namespace tnet
     public:
         friend class HttpServer;
 
-        HttpParser(HttpServer* server);
+        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
+        
+        HttpParser(HttpServer* server, const ConnectionPtr_t& conn);
         ~HttpParser();
 
         static void initSettings();
-
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
 
         void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buffer, int count);
 
@@ -59,6 +59,8 @@ namespace tnet
         static struct http_parser_settings ms_settings;
          
         HttpServer* m_server;
+
+        std::tr1::weak_ptr<Connection> m_conn;
 
         struct http_parser m_parser;
 

@@ -6,10 +6,14 @@ namespace tnet
 {
     struct http_parser_settings HttpParser::ms_settings;
 
-    HttpParser::HttpParser(HttpServer* server)
+    HttpParser::HttpParser(HttpServer* server, const ConnectionPtr_t& conn)
         : m_server(server)
+        , m_conn(conn)
     {
-        
+        http_parser_init(&m_parser, HTTP_REQUEST);
+        m_parser.data = this;
+
+        m_lastWasValue = true;
     }
 
     HttpParser::~HttpParser()
@@ -156,6 +160,18 @@ namespace tnet
         m_request.minorVersion = m_parser.http_minor;
         m_request.method = m_parser.method;
         
+        if(!m_parser.upgrade)
+        {
+            ConnectionPtr_t conn = m_conn.lock();
+            if(conn)
+            {
+                (m_server->getRequestCallback())(m_request, conn);
+            }
+            else
+            {
+                return -1;    
+            }
+        }
 
         return 0;
     }
@@ -178,6 +194,16 @@ namespace tnet
 
     void HttpParser::onConnRead(const ConnectionPtr_t& conn, const char* buffer, int count)
     {
-        LOG_INFO("onConnRead", buffer, count);    
+        int n = http_parser_execute(&m_parser, &ms_settings, buffer, count);
+        if(m_parser.upgrade)
+        {
+            //websokcet here, we may later support it
+        }
+        else if(n != count)
+        {
+            //http parser error, shutdown
+            conn->shutDown();
+            return;    
+        }
     }
 }

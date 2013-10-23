@@ -15,11 +15,7 @@ namespace tnet
     const int DefaultMaxHeaderSize = 4 * 1024;
     const int DefaultMaxBodySize = 1024 * 1024;
 
-    typedef std::tr1::shared_ptr<HttpConnection>  HttpConnectionPtr_t;
-    typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-    typedef std::tr1::shared_ptr<HttpRequest> HttpRequestPtr_t;
-    
-    void dummyRequestCallback(const ConnectionPtr_t&, const HttpRequestPtr_t&)
+    void dummyRequest(const HttpRequest& request, const std::tr1::shared_ptr<void>& conn)
     {
         
     }
@@ -29,8 +25,9 @@ namespace tnet
         , m_maxHeaderSize(DefaultMaxHeaderSize)
         , m_maxBodySize(DefaultMaxBodySize)
     {
-        m_func = std::tr1::bind(&dummyRequestCallback, _1, _2);
         HttpParser::initSettings();
+    
+        m_requestCallback = std::tr1::bind(&dummyRequest, _1, _2);    
     }
    
     HttpServer::~HttpServer()
@@ -45,7 +42,7 @@ namespace tnet
 
     void HttpServer::onNewConnection(const ConnectionPtr_t& conn)
     {
-        HttpParserPtr_t parser(new HttpParser(this));
+        HttpParserPtr_t parser(new HttpParser(this, conn));
         
         conn->setCallback(std::tr1::bind(&HttpParser::onConnEvent, parser, _1, _2, _3, _4)); 
     }

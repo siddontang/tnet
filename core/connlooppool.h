@@ -11,10 +11,13 @@ namespace tnet
     class IOLoopThreadPool;
     class IOLoop;
     class Timer;
+    class Connection;
 
     class ConnLoopPool
     {
     public:
+        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
+
         ConnLoopPool(int loopNum, TcpServer* server);
         ~ConnLoopPool();
 

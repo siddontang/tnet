@@ -15,13 +15,15 @@ namespace tnet
 {
     class TcpServer;
     class Address;
-    class HttpConnection;
+    class WsConnection;
     class HttpRequest;
     class HttpParser;
 
     class HttpServer : public nocopyable
     {
     public:
+        friend class HttpParser;
+
         HttpServer(TcpServer* server);
         ~HttpServer();
         
@@ -34,18 +36,18 @@ namespace tnet
         int listen(const Address& addr);
     
         typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::shared_ptr<HttpConnection> HttpConnectionPtr_t;
         typedef std::tr1::shared_ptr<HttpRequest> HttpRequestPtr_t;
         typedef std::tr1::shared_ptr<HttpParser> HttpParserPtr_t;
+        typedef std::tr1::shared_ptr<WsConnection> WsConnectionPtr_t;
 
-        typedef std::tr1::function<void (const ConnectionPtr_t&, const HttpRequestPtr_t&)> HttpRequestCallback_t;
+        typedef std::tr1::function<void (const HttpRequest&, const ConnectionPtr_t&)> RequestCallback_t;
+        void setRequestCallback(const RequestCallback_t& func) { m_requestCallback = func; }
+        const RequestCallback_t& getRequestCallback() { return m_requestCallback; }
 
-        void setRequestCallback(const HttpRequestCallback_t& func) { m_func = func; }
-        HttpRequestCallback_t& getRequestCallback() { return m_func; }
-           
     private:
-
         void onNewConnection(const ConnectionPtr_t&);
+
+        void onRequest(const HttpRequest& request, const ConnectionPtr_t& conn);
 
     private:
         TcpServer* m_server;
@@ -53,7 +55,7 @@ namespace tnet
         int m_maxHeaderSize;
         int m_maxBodySize;
     
-        HttpRequestCallback_t  m_func;
+        RequestCallback_t m_requestCallback;
     };
     
 }

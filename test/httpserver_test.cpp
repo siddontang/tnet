@@ -27,9 +27,8 @@ void sigAction(TcpServer* pServer, int signum)
 }
 
 typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-typedef std::tr1::shared_ptr<HttpRequest> HttpRequestPtr_t;
 
-void onHandler(const ConnectionPtr_t& conn, const HttpRequestPtr_t& request)
+void onHandler(const HttpRequest& request, const ConnectionPtr_t& conn)
 {
     HttpResponse resp;
     resp.statusCode = 200;

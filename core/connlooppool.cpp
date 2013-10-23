@@ -33,7 +33,7 @@ namespace tnet
         m_connChecker.resize(m_loops.size());
         for(size_t i = 0; i < m_loops.size(); ++i)
         {
-            m_connChecker[i] = new Timer(std::tr1::bind(&ConnLoopPool::onConnCheck, 
+            m_connChecker[i] = new Timer(m_loops[i], std::tr1::bind(&ConnLoopPool::onConnCheck, 
                 this, m_loops[i], std::tr1::shared_ptr<int>(new int(0))),
                 DefaultConnCheckRepeat * 1000, DefaultConnTimeout * 1000);
         }
@@ -82,7 +82,7 @@ namespace tnet
 
         ev_tstamp now = ev_now(loop->evloop()); 
 
-        vector<ConnectionPtr_t>& connections = m_server->getConnections();
+        const vector<ConnectionPtr_t>& connections = m_server->getConnections();
 
         for(int i = 0; i < m_connCheckStep; ++i, ++index)
         {
@@ -103,6 +103,6 @@ namespace tnet
             }
         }
 
-        *num = index % m_connections.size();
+        *num = index % connections.size();
     }
 }
