@@ -47,7 +47,7 @@ int main()
 {
     //Log::rootLog().setLevel(Log::ERROR);
      
-    TcpServer s(2, 4, 10000);
+    TcpServer s(2, 4, 1000000);
 
     HttpServer httpd(&s);
 
