@@ -42,12 +42,16 @@ namespace tnet
 
         typedef std::tr1::function<void (const HttpRequest&, const ConnectionPtr_t&)> RequestCallback_t;
         void setRequestCallback(const RequestCallback_t& func) { m_requestCallback = func; }
-        const RequestCallback_t& getRequestCallback() { return m_requestCallback; }
+
+        typedef std::tr1::function<void (const ConnectionPtr_t&)> ConnCallback_t;
+        void setConnCloseCallback(const ConnCallback_t& func) { m_closeCallback = func; }
+        void setConnErrorCallback(const ConnCallback_t& func) { m_errorCallback = func; }
 
     private:
-        void onNewConnection(const ConnectionPtr_t&);
-
-        void onRequest(const HttpRequest& request, const ConnectionPtr_t& conn);
+        void onConnectionEvent(const ConnectionPtr_t&, Connection::Event, const char*, int);
+        void handleRead(const ConnectionPtr_t& conn, const char* buf, int count);
+    
+        void onRequest(const HttpRequest& request, const ConnectionPtr_t& conn) { m_requestCallback(request, conn); }
 
     private:
         TcpServer* m_server;
@@ -56,6 +60,9 @@ namespace tnet
         int m_maxBodySize;
     
         RequestCallback_t m_requestCallback;
+
+        ConnCallback_t m_closeCallback;
+        ConnCallback_t m_errorCallback;
     };
     
 }

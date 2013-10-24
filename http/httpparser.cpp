@@ -18,7 +18,6 @@ namespace tnet
 
     HttpParser::~HttpParser()
     {
-        
     }
 
     void HttpParser::initSettings()
@@ -86,6 +85,8 @@ namespace tnet
     int HttpParser::handleMessageBegin()
     {
         m_request.clear();
+        m_curField.clear();
+        m_lastWasValue = true;
         return 0;    
     }
         
@@ -165,7 +166,7 @@ namespace tnet
             ConnectionPtr_t conn = m_conn.lock();
             if(conn)
             {
-                (m_server->getRequestCallback())(m_request, conn);
+                m_server->onRequest(m_request, conn);
             }
             else
             {
@@ -180,17 +181,6 @@ namespace tnet
     {
         return (m_parser.nread <= (uint32_t)m_server->getMaxHeaderSize());
     }
-
-    void HttpParser::onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buffer, int count)
-    {
-        switch(event)
-        {
-            case Connection::ReadEvent:
-                onConnRead(conn, buffer, count);
-            default:
-                return;    
-        }    
-    }   
 
     void HttpParser::onConnRead(const ConnectionPtr_t& conn, const char* buffer, int count)
     {

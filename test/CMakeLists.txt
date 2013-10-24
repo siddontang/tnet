@@ -3,9 +3,18 @@ include_directories(${TNET_SOURCE_DIR}/http)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
+set(DEP_LIB tnet_http tnet_core)
+
+link_directories("/usr/local/lib")
+
+if(CMAKE_USE_TCMALLOC)
+    set(DEP_LIB ${DEP_LIB} tcmalloc_minimal)
+    message(STATUS "use tcmalloc  ${DEP_LIB}")
+endif()
+
 add_executable(httpserver_test httpserver_test.cpp)
-target_link_libraries(httpserver_test tnet_http tnet_core)
+target_link_libraries(httpserver_test ${DEP_LIB})
 
 
 add_executable(httpurl_test httpurl_test.cpp)
-target_link_libraries(httpurl_test tnet_http tnet_core)
+target_link_libraries(httpurl_test ${DEP_LIB})

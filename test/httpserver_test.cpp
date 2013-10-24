@@ -35,9 +35,11 @@ void onHandler(const HttpRequest& request, const ConnectionPtr_t& conn)
     resp.setContentType("text/html");
     resp.setKeepAlive(true);
     resp.enableDate();
+   
+    resp.body.append("first"); 
+    resp.body.append(1600, 'a');
+    resp.body.append("Hello World");
     
-    resp.body.resize(1600);
-
     conn->send(resp.dump());
 }
 

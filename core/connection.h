@@ -15,6 +15,7 @@ extern "C"
 namespace tnet
 {
     class IOLoop;
+    class Address;
 
     class Connection : public nocopyable
                      , public std::tr1::enable_shared_from_this<Connection> 
@@ -22,6 +23,8 @@ namespace tnet
     public:
         enum Event
         {
+            ConnectEvent,
+            ConnectingEvent,
             ReadEvent,
             WriteCompleteEvent,
             ErrorEvent,
@@ -30,6 +33,7 @@ namespace tnet
         
         enum Status
         {
+            None,
             Connecting,
             Connected,
             Disconnecting,
@@ -38,9 +42,8 @@ namespace tnet
 
         typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
         typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnectionFunc_t;
-        typedef std::tr1::function<void (const ConnectionPtr_t&)> ReleaseConnFunc_t;
 
-        Connection(IOLoop* loop, int sockFd, const ReleaseConnFunc_t& func);
+        Connection(IOLoop* loop, int sockFd, const ConnectionFunc_t& func);
         ~Connection();    
 
         void shutDown();
@@ -50,17 +53,23 @@ namespace tnet
 
         Status getStatus() { return m_status; }
 
+        bool isConnected() { return m_status == Connected; }
+        bool isConnecting() { return m_status == Connecting; }
+        bool isDisconnecting() { return m_status == Disconnecting; }
+        bool isDisconnected() { return m_status == Disconnected; }
+
         int getSockFd() { return m_io.fd; } 
 
-        //below are for inner tnet use, but they cannot be private
-        IOLoop* getLoop() { return m_loop; }
-        
-        ev_tstamp getLastUpdate() { return m_lastUpdate; }
-        
+        void connect(const Address& addr);
         void onEstablished();
 
-        //not thread safe, must call in loop thread
-        void setCallback(const ConnectionFunc_t& func) { m_func = func; }
+        IOLoop* getLoop() { return m_loop; }
+        
+        ev_tstamp getLastUpdate() { return m_lastUpdate; } 
+
+        void setContext(const std::tr1::shared_ptr<void>& context) { m_context = context; }
+        const std::tr1::shared_ptr<void>& getContext() { return m_context; }
+        void resetContext() { m_context.reset(); }
 
     private:
         static void onData(struct ev_loop*, struct ev_io*, int);
@@ -69,7 +78,10 @@ namespace tnet
         void handleError();
         void handleWrite();
         void handleClose();
+        void handleConnect();
 
+        void onEstablishedInLoop();
+        void connectInLoop(const Address& addr);
         void sendInLoop(const std::string& data);
 
         void resetIOEvent(int events);
@@ -84,11 +96,12 @@ namespace tnet
         Status m_status;
         
         ConnectionFunc_t m_func;
-        ReleaseConnFunc_t m_releaseFunc;
     
         std::string m_sendBuffer;
     
         ev_tstamp m_lastUpdate;
+    
+        std::tr1::shared_ptr<void> m_context;
     };    
 }
 

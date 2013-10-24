@@ -5,6 +5,7 @@ extern "C"
 #include "http_parser.h"    
 }
 
+#include "httputil.h"
 #include "log.h"
 
 using namespace std;
@@ -85,7 +86,11 @@ namespace tnet
                     value = "";    
                 }
 
-                params[key] = value;
+                if(!key.empty())
+                {
+                    key = HttpUtil::unescape(key); 
+                    params[key] = HttpUtil::unescape(value);
+                }
 
                 lastPos2 = pos2 + 1;
             }    

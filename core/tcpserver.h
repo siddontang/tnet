@@ -21,21 +21,18 @@ namespace tnet
     class Connection;
     class ConnLoopPool;
     class Timer;
+    class ConnChecker;
 
     class TcpServer : public nocopyable
     {
     public:
-        friend class Connection;
-        friend class ConnLoopPool;
-        
         TcpServer(int acceptLoopNum, int connLoopNum, int maxConnections);
         ~TcpServer();
       
         typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnEventCallback_t; 
-        typedef std::tr1::function<void (const ConnectionPtr_t&)> NewConnCallback_t;
+        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnectionFunc_t; 
       
-        int listen(const Address& addr, const NewConnCallback_t& func);
+        int listen(const Address& addr, const ConnectionFunc_t& func);
        
         void setConnLoopIOInterval(int milliseconds);
 
@@ -49,24 +46,26 @@ namespace tnet
         void start();
         void stop();
 
-        IOLoop* getHashConnLoop(int fd) { return m_connLoops[fd % m_connLoops.size()]; }
-
     private:
-        void onNewConnection(int sockFd, const NewConnCallback_t& func);
+        void onNewConnection(int sockFd, const ConnectionFunc_t& func);
 
-        void newConnectionInLoop(IOLoop* loop, int sockFd, const NewConnCallback_t& func);
+        void newConnectionInLoop(IOLoop* loop, int sockFd, const ConnectionFunc_t& func);
 
         void deleteConnection(const ConnectionPtr_t& conn);
         void deleteConnectionInLoop(const ConnectionPtr_t& conn);
+
+        void onConnectionEvent(const ConnectionFunc_t& func, const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count);
 
         const std::vector<ConnectionPtr_t>& getConnections() { return m_connections; }
 
     private:
         Acceptor* m_acceptor;
-        ConnLoopPool* m_connPool;
 
+        IOLoopThreadPool* m_connPool;
         std::vector<IOLoop*> m_connLoops;
     
+        ConnChecker* m_connChecker;
+
         IOLoop* m_mainLoop;
 
         Signaler* m_signaler;
@@ -75,6 +74,9 @@ namespace tnet
     
         int m_maxConnections;
         volatile int m_curConnections;
+
+        int m_acceptLoopNum;
+        int m_connLoopNum;
 
         SpinLock m_lock;
     };

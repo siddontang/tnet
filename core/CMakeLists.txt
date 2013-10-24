@@ -14,7 +14,7 @@ set(CORE_SRCS
     tcpserver.cpp
     threadutil.cpp
     timer.cpp
-    connlooppool.cpp
+    connchecker.cpp
     )
 
 set(EV_SRCS ./libev/ev.c)

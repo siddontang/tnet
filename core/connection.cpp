@@ -7,6 +7,8 @@
 #include "ioloop.h"
 #include "misc.h"
 #include "log.h"
+#include "address.h"
+#include "sockutil.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -26,13 +28,11 @@ namespace tnet
     {
     }
 
-    Connection::Connection(IOLoop* loop, int sockFd, const ReleaseConnFunc_t& func)
+    Connection::Connection(IOLoop* loop, int sockFd, const ConnectionFunc_t& func)
         : m_loop(loop)
-        , m_releaseFunc(func)
+        , m_func(func)
     {
-        m_status = Connecting;
-
-        m_func = std::tr1::bind(&dummyConnFunc, _1, _2, _3, _4);
+        m_status = None;
         
         ev_io_init(&m_io, Connection::onData, sockFd, EV_READ);
     }
@@ -43,11 +43,23 @@ namespace tnet
    
     void Connection::onEstablished()
     {
-        if(!m_loop->inLoopThread())
+        if(m_status != None)
         {
-            return m_loop->runTask(std::tr1::bind(&Connection::onEstablished, this));    
+            return;    
         }
 
+        if(!m_loop->inLoopThread())
+        {
+            return m_loop->runTask(std::tr1::bind(&Connection::onEstablishedInLoop, this));    
+        }
+        else
+        {
+            onEstablishedInLoop();    
+        }
+    }
+
+    void Connection::onEstablishedInLoop()
+    {
         m_status = Connected;
 
         updateTime();
@@ -57,6 +69,54 @@ namespace tnet
         ev_io_start(m_loop->evloop(), &m_io);
     }
    
+    void Connection::connect(const Address& addr)
+    {
+        if(m_status != None)
+        {
+            return;    
+        } 
+        
+        if(!m_loop->inLoopThread())
+        {
+            m_loop->runTask(std::tr1::bind(&Connection::connectInLoop, this, addr));    
+        }   
+        else
+        {
+            connectInLoop(addr);    
+        }
+    }
+
+    void Connection::connectInLoop(const Address& addr)
+    {
+        int err = SockUtil::connect(m_io.fd, addr);
+        
+        Connection::Event event = ConnectEvent;
+
+        if(err < 0)
+        {
+            if(err == EINPROGRESS)
+            {
+                m_status = Connecting;
+                event = ConnectingEvent;    
+                ev_io_set(&m_io, m_io.fd, EV_WRITE);            
+            }
+            else
+            {
+                handleError();    
+            }
+        }
+        else
+        {
+            m_status = Connected;    
+        }
+
+        updateTime();
+
+        m_io.data = this;
+
+        ev_io_start(m_loop->evloop(), &m_io);
+    }
+
     void Connection::shutDown()
     {
         assert(m_status == Connected);
@@ -94,9 +154,33 @@ namespace tnet
         
         if(revents & EV_WRITE)
         {
-            conn->handleWrite();        
+            if(conn->getStatus() == Connecting)
+            {
+                conn->handleConnect(); 
+            }
+            else
+            {
+                conn->handleWrite();        
+            } 
         }
     } 
+
+    void Connection::handleConnect()
+    {
+        if(SockUtil::getSockError(m_io.fd) != 0)
+        {
+            handleError();
+            return;    
+        }    
+
+        resetIOEvent(EV_READ);
+
+        m_status = Connected;
+
+        updateTime();
+
+        m_func(shared_from_this(), ConnectEvent, NULL, 0);
+    }
 
     void Connection::handleRead()
     {
@@ -222,8 +306,6 @@ namespace tnet
         m_status = Disconnected;
     
         m_func(shared_from_this(), CloseEvent, NULL, 0);
-    
-        m_releaseFunc(shared_from_this()); 
     }
 
     void Connection::send(const char* data, int dataLen)

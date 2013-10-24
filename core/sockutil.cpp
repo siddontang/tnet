@@ -15,6 +15,11 @@
 
 namespace tnet
 {
+    int SockUtil::create()
+    {
+        return socket(PF_INET, SOCK_STREAM, 0);    
+    }
+
     int SockUtil::bindAndListen(const Address& addr)
     {
         int err = 0;
@@ -55,6 +60,13 @@ namespace tnet
 
         close(fd);
         return err;
+    }
+
+    int SockUtil::connect(int sockFd, const Address& addr)
+    {
+        struct sockaddr_in sockAddr = addr.sockAddr();
+    
+        return ::connect(sockFd, (struct sockaddr*)&sockAddr, sizeof(sockAddr));
     }
 
     int SockUtil::setNoDelay(int sockFd, bool on)
@@ -140,4 +152,19 @@ namespace tnet
         return 0;
     }
 
+    int SockUtil::getSockError(int sockFd)
+    {
+        int opt;
+        socklen_t optLen = static_cast<socklen_t>(sizeof(opt));
+        
+        if(getsockopt(sockFd, SOL_SOCKET, SO_ERROR, &opt, &optLen) < 0)
+        {
+            int err = errno;
+            return err;    
+        }   
+        else
+        {
+            return opt;    
+        }
+    }
 }

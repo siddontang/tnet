@@ -21,8 +21,6 @@ namespace tnet
     class HttpParser : public nocopyable
     {
     public:
-        friend class HttpServer;
-
         typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
         
         HttpParser(HttpServer* server, const ConnectionPtr_t& conn);
@@ -30,9 +28,6 @@ namespace tnet
 
         static void initSettings();
 
-        void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buffer, int count);
-
-    private:
         static int onMessageBegin(struct http_parser*);
         static int onUrl(struct http_parser*, const char*, size_t);
         static int onStatusComplete(struct http_parser*);

@@ -116,6 +116,11 @@ namespace tnet
         
     std::string HttpUtil::unescape(const std::string & sSrc)
     {
+        if(sSrc.empty())
+        {
+            return "";    
+        }
+
         // Note from RFC1630:  "Sequences which start with a percent sign
         // but are not followed by two hexadecimal characters (0-9, A-F) are reserved
         // for future extension"
@@ -181,6 +186,11 @@ namespace tnet
 
     std::string HttpUtil::escape(const std::string & sSrc)
     {
+        if(sSrc.empty())
+        {
+            return ""; 
+        }
+
         const char DEC2HEX[16 + 1] = "0123456789ABCDEF";
         const unsigned char * pSrc = (const unsigned char *)sSrc.c_str();
         const int SRC_LEN = sSrc.length();

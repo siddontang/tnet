@@ -7,7 +7,9 @@ namespace tnet
     class SockUtil
     {
     public:
+        static int create();
         static int bindAndListen(const Address& addr);
+        static int connect(int sockFd, const Address& addr);
 
         static int setNoDelay(int sockFd, bool on);
         static int setCloseOnExec(int sockFd, bool on);
@@ -20,6 +22,8 @@ namespace tnet
 
         static int getLocalAddr(int sockFd, Address& addr);
         static int getRemoteAddr(int sockFd, Address& addr);
+
+        static int getSockError(int sockFd);
     };
 
 }
