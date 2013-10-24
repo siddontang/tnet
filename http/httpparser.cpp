@@ -187,7 +187,8 @@ namespace tnet
         int n = http_parser_execute(&m_parser, &ms_settings, buffer, count);
         if(m_parser.upgrade)
         {
-            //websokcet here, we may later support it
+            //websokcet here, we may later support it, now shutdown
+            conn->shutDown();
         }
         else if(n != count)
         {
