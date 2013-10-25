@@ -17,14 +17,25 @@ namespace tnet
 {
     int SockUtil::create()
     {
-        return socket(PF_INET, SOCK_STREAM, 0);    
+#ifdef LINUX
+        int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);    
+#else
+        int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if(fd < 0)
+        {
+            return fd;    
+        }
+
+        SockUtil::setNonBlockingAndCloseOnExec(fd);
+#endif
+        return fd;
     }
 
     int SockUtil::bindAndListen(const Address& addr)
     {
         int err = 0;
         
-        int fd = socket(PF_INET, SOCK_STREAM, 0);
+        int fd = create();
         if(fd < 0)
         {
             err = errno;
@@ -32,7 +43,6 @@ namespace tnet
             return fd;    
         }
             
-        SockUtil::setNonBlockingAndCloseOnExec(fd);
         SockUtil::setReuseable(fd, true);
         
         do

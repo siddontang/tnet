@@ -93,7 +93,11 @@ namespace tnet
 
         AcceptLoop* acceptLoop = (AcceptLoop*)w->data; 
 
+#ifdef LINUX
+        int sockFd = accept4(w->fd, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC);
+#else
         int sockFd = accept(w->fd, NULL, NULL);
+#endif
         if(sockFd < 0)
         {
             int err = errno;
@@ -109,7 +113,9 @@ namespace tnet
             return;
         }    
 
+#ifndef LINUX
         SockUtil::setNonBlockingAndCloseOnExec(sockFd);
+#endif
         SockUtil::setKeepAlive(sockFd, true);
         
         (watcher->func)(sockFd);

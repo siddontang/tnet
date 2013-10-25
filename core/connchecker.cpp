@@ -7,6 +7,7 @@
 #include "tcpserver.h"
 #include "connection.h"
 #include "misc.h"
+#include "iolooppooltimer.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -27,41 +28,41 @@ namespace tnet
         m_connTimeout = DefaultConnTimeout;
         m_connectTimeout = DefaultConnectTimeout;
 
-        m_connChecker.resize(m_loops.size());
-        for(size_t i = 0; i < m_loops.size(); ++i)
-        {
-            m_connChecker[i] = new Timer(m_loops[i], std::tr1::bind(&ConnChecker::onConnCheck, 
-                this, m_loops[i], std::tr1::shared_ptr<int>(new int(0))),
+        m_connChecker = new IOLoopPoolTimer(m_loops, std::tr1::bind(&ConnChecker::onConnCheck, this, _1), 
                 DefaultConnCheckRepeat * 1000, DefaultConnTimeout * 1000);
-        }
     }
 
     ConnChecker::~ConnChecker()
     {
-        for_each_all_delete(m_connChecker);
+        delete m_connChecker;
     }
     
     void ConnChecker::start()
     {
-        for_each_all(m_connChecker, std::tr1::bind(&Timer::start, _1));     
+        m_connChecker->start();
     }
 
     void ConnChecker::stop()
     {
-        for_each_all(m_connChecker, std::tr1::bind(&Timer::stop, _1));     
+        m_connChecker->stop();
     }
 
 
     void ConnChecker::setConnCheckRepeat(int seconds)
     {            
-        assert(seconds > 0);
-        for_each_all(m_connChecker, std::tr1::bind(&Timer::reset, _1, seconds * 1000));     
+        m_connChecker->reset(seconds * 1000);
     }
 
-    void ConnChecker::onConnCheck(IOLoop* loop, const std::tr1::shared_ptr<void>& content)
+    void ConnChecker::onConnCheck(Timer* timer)
     {
-        std::tr1::shared_ptr<int> num = std::tr1::static_pointer_cast<int>(content); 
-        
+        IOLoop* loop = timer->getLoop();
+        std::tr1::shared_ptr<int> num = std::tr1::static_pointer_cast<int>(timer->getContext()); 
+        if(!num)
+        {
+            num = std::tr1::shared_ptr<int>(new int(0));
+            timer->setContext(num);    
+        }
+
         int lastIndex = *num;
 
         int index = lastIndex;

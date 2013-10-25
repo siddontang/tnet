@@ -1,11 +1,14 @@
 #include "httpurl.h"
 
+#include <vector>
+
 extern "C"
 {
 #include "http_parser.h"    
 }
 
 #include "httputil.h"
+#include "stringutil.h"
 #include "log.h"
 
 using namespace std;
@@ -60,41 +63,29 @@ namespace tnet
 
     void HttpUrl::parseQuery(const string& query)
     {
-        char sep1 = '=';
-        char sep2 = '&';
-
-        size_t pos1 = 0;
-        size_t pos2 = 0;
-        size_t lastPos2 = 0;
+        vector<string> args = StringUtil::split(query, "&");
         string key;
         string value;
-
-        for(;pos2 <= query.size(); ++pos2)
+        for(size_t i = 0; i < args.size(); ++i)
         {
-            if(query[pos2] == sep2 || pos2 == query.size())
+            vector<string> p = StringUtil::split(args[i], "=");
+            if(p.size() == 2)
             {
-                for(pos1 = lastPos2; pos1 < pos2 && query[pos1] != sep1; ++pos1)
-                {}
-
-                key = query.substr(lastPos2, pos1 - lastPos2);
-                if(query[pos1] == sep1)
-                {
-                    value = query.substr(pos1 + 1, pos2 - pos1 - 1);   
-                }
-                else
-                {
-                    value = "";    
-                }
-
-                if(!key.empty())
-                {
-                    key = HttpUtil::unescape(key); 
-                    params[key] = HttpUtil::unescape(value);
-                }
-
-                lastPos2 = pos2 + 1;
+                key = p[0];
+                value = p[1]; 
             }    
+            else if(p.size() == 1)
+            {
+                key = p[0];
+                value = "";    
+            }
+            else
+            {
+                //invalid, ignore
+                continue;    
+            }
+
+            params[HttpUtil::unescape(key)] = HttpUtil::unescape(value);
         }
-    
     }
 }

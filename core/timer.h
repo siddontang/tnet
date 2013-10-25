@@ -18,7 +18,7 @@ namespace tnet
     class Timer : public nocopyable
     {
     public:
-        typedef std::tr1::function<void ()> TimerFunc_t;
+        typedef std::tr1::function<void (Timer*)> TimerFunc_t;
 
         //repeat and after are milliseconds
         Timer(IOLoop* loop, const TimerFunc_t& func, int repeat, int after = 0);
@@ -29,10 +29,11 @@ namespace tnet
 
         void reset(int repeat);
 
-        typedef std::tr1::shared_ptr<void> UserData_t;
-        void setUserData(const UserData_t& udata) { m_userData = udata; }
-        UserData_t getUserData() { return m_userData; }
-        void resetUserData() { m_userData.reset(); }
+        void setContext(const std::tr1::shared_ptr<void>& context) { m_context = context; }
+        std::tr1::shared_ptr<void> getContext() { return m_context; }
+        void resetContext() { m_context.reset(); }
+
+        IOLoop* getLoop() { return m_loop; }
 
     private:
         void startInLoop();
@@ -46,7 +47,7 @@ namespace tnet
         struct ev_timer m_timer;
         TimerFunc_t m_func;
 
-        UserData_t m_userData;
+        std::tr1::shared_ptr<void> m_context;
     };
     
 }

@@ -19,6 +19,7 @@ namespace tnet
         , m_curConnections(0)
     {
         m_pool = new IOLoopThreadPool(num, "connpool");
+        m_loops = m_pool->getLoops();
 
         m_connections.resize(int(connNum * 1.5));
 

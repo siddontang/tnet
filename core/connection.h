@@ -68,7 +68,7 @@ namespace tnet
         ev_tstamp getLastUpdate() { return m_lastUpdate; } 
 
         void setContext(const std::tr1::shared_ptr<void>& context) { m_context = context; }
-        const std::tr1::shared_ptr<void>& getContext() { return m_context; }
+        std::tr1::shared_ptr<void> getContext() { return m_context; }
         void resetContext() { m_context.reset(); }
 
     private:

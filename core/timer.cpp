@@ -76,6 +76,6 @@ namespace tnet
     {
         Timer* timer = (Timer*)w->data;
         
-        (timer->m_func)();    
+        (timer->m_func)(timer);    
     }
 }

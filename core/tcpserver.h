@@ -46,6 +46,8 @@ namespace tnet
         void start();
         void stop();
 
+        const std::vector<IOLoop*>& getConnLoops() { m_connLoops; }
+
     private:
         void onNewConnection(int sockFd, const ConnectionFunc_t& func);
 

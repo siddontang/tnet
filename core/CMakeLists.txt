@@ -15,6 +15,8 @@ set(CORE_SRCS
     threadutil.cpp
     timer.cpp
     connchecker.cpp
+    iolooppooltimer.cpp
+    stringutil.cpp
     )
 
 set(EV_SRCS ./libev/ev.c)

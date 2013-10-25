@@ -1,6 +1,5 @@
 set(HTTP_SRCS
     http_parser.c
-    httpconnection.cpp
     httprequest.cpp
     httpresponse.cpp
     httpserver.cpp

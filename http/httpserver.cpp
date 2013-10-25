@@ -3,7 +3,6 @@
 #include <string>
 
 #include "tcpserver.h"
-#include "httpconnection.h"
 #include "log.h"
 #include "httpparser.h"
 

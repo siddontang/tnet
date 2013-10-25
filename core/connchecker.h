@@ -10,6 +10,7 @@ namespace tnet
     class IOLoop;
     class Timer;
     class Connection;
+    class IOLoopPoolTimer;
 
     class ConnChecker
     {
@@ -33,13 +34,13 @@ namespace tnet
         void setConnectTimeout(int seconds) { m_connectTimeout = seconds; }
 
     private:
-        void onConnCheck(IOLoop* loop, const std::tr1::shared_ptr<void>& content);
+        void onConnCheck(Timer* timer);
         
     private:
-        std::vector<Timer*> m_connChecker;
-        
-        const std::vector<IOLoop*> m_loops;
-        const std::vector<ConnectionPtr_t> m_connections;
+        IOLoopPoolTimer* m_connChecker;
+
+        const std::vector<IOLoop*>& m_loops;
+        const std::vector<ConnectionPtr_t>& m_connections;
 
         int m_connCheckRepeat;
         int m_connCheckStep;

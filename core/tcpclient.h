@@ -30,6 +30,8 @@ namespace tnet
         typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnectionFunc_t;
         int connect(const Address& addr, const ConnectionFunc_t& func);
 
+        const std::vector<IOLoop*>& getLoops() { return m_loops; }
+
     private:
         void onConnEvent(const ConnectionFunc_t& func, const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count);
         void deleteConnection(const ConnectionPtr_t& conn);
@@ -39,6 +41,7 @@ namespace tnet
         IOLoopThreadPool* m_pool;
         ConnChecker* m_checker;
 
+        std::vector<IOLoop*> m_loops;
         std::vector<ConnectionPtr_t> m_connections;
     
         int m_maxConnections;
