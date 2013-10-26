@@ -22,19 +22,18 @@ set(CORE_SRCS
 set(EV_SRCS ./libev/ev.c)
 
 #define some libev macro to proper use libev
-add_definitions(-DEV_STANDALONE=1 -DEV_USE_FLOOR -DEV_USE_CLOCK_SYSCALL
--DEV_USE_NANOSLEEP -DEV_MULTIPLICITY=1 -DEV_USE_NAANOSLEEP)
+add_definitions(-DEV_STANDALONE=1 -DEV_USE_FLOOR -DEV_USE_NANOSLEEP -DEV_MULTIPLICITY=1)
 
 include_directories("./libev")
 
 set(DEP_LIB pthread)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    add_definitions(-DEV_USE_EVENTFD -DEV_USE_EPOLL)
+    add_definitions(-DEV_USE_EVENTFD -DEV_USE_EPOLL -DEV_USE_CLOCK_SYSCALL)
 
     set(DEP_LIB ${DEP_LIB} rt)
 else()
-    add_definitions(-DEV_USE_KQUEUE)
+    add_definitions(-DEV_USE_SELECT)
 endif()
 
 add_library(tnet_core ${CORE_SRCS} ${EV_SRCS})

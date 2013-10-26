@@ -140,8 +140,10 @@ namespace tnet
     
     void Connection::onData(struct ev_loop* loop, struct ev_io* w, int revents)
     {
-        Connection* conn = (Connection*)w->data;
+        Connection* c = (Connection*)w->data;
         
+        ConnectionPtr_t conn = c->shared_from_this();
+
         if(revents & EV_ERROR)
         {
             conn->handleError();
@@ -249,7 +251,8 @@ namespace tnet
         {
             clearBuffer(m_sendBuffer);
 
-            m_func(shared_from_this(), WriteCompleteEvent, NULL, 0);
+            m_loop->runTask(std::tr1::bind(m_func,  shared_from_this(), WriteCompleteEvent, "", 0));
+            //m_func(shared_from_this(), WriteCompleteEvent, NULL, 0);
 
             resetIOEvent(EV_READ);
 
