@@ -99,15 +99,19 @@ namespace tnet
                 m_status = Connecting;
                 event = ConnectingEvent;    
                 ev_io_set(&m_io, m_io.fd, EV_WRITE);            
+        
+                m_func(shared_from_this(), ConnectingEvent, NULL, 0);
             }
             else
             {
-                handleError();    
+                handleError(); 
+                return;
             }
         }
         else
         {
             m_status = Connected;    
+            m_func(shared_from_this(), ConnectEvent, NULL, 0);
         }
 
         updateTime();
@@ -119,8 +123,6 @@ namespace tnet
 
     void Connection::shutDown()
     {
-        assert(m_status == Connected);
-
         if(m_status == Disconnecting || m_status == Disconnected)
         {
             return;    
@@ -251,7 +253,7 @@ namespace tnet
         {
             clearBuffer(m_sendBuffer);
 
-            m_loop->runTask(std::tr1::bind(m_func,  shared_from_this(), WriteCompleteEvent, "", 0));
+            m_loop->addTask(std::tr1::bind(m_func,  shared_from_this(), WriteCompleteEvent, "", 0));
             //m_func(shared_from_this(), WriteCompleteEvent, NULL, 0);
 
             resetIOEvent(EV_READ);
@@ -307,8 +309,8 @@ namespace tnet
         close(sockFd);    
 
         m_status = Disconnected;
-    
-        m_func(shared_from_this(), CloseEvent, NULL, 0);
+   
+        m_loop->addTask(std::tr1::bind(m_func, shared_from_this(), CloseEvent, "", 0)); 
     }
 
     void Connection::send(const char* data, int dataLen)

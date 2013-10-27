@@ -18,5 +18,8 @@ target_link_libraries(httpserver_test ${DEP_LIB})
 add_executable(httpurl_test httpurl_test.cpp)
 target_link_libraries(httpurl_test ${DEP_LIB})
 
+add_executable(echoserver_test echoserver_test.cpp)
+target_link_libraries(echoserver_test ${DEP_LIB})
+
 add_executable(echoclient_test echoclient_test.cpp)
 target_link_libraries(echoclient_test ${DEP_LIB})

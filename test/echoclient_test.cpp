@@ -1,10 +1,12 @@
 #include "tcpclient.h"
 #include "address.h"
 #include "log.h"
+#include "ioloop.h"
 
 #include <tr1/memory>
 #include <tr1/functional>
 #include <stdio.h>
+#include <string>
 
 using namespace tnet;
 using namespace std;
@@ -14,6 +16,13 @@ typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
 
 void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count)
 {
+    std::tr1::shared_ptr<int> num = std::tr1::static_pointer_cast<int>(conn->getContext());
+    if(!num)
+    {
+        num = std::tr1::shared_ptr<int>(new int(0));
+        conn->setContext(num);    
+    }
+
     switch(event)
     {
         case Connection::ConnectingEvent:
@@ -24,7 +33,18 @@ void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const cha
             conn->send("Hello World");
             break;
         case Connection::ReadEvent:
+            {
+                if((*num) > 10)
+                {
+                    conn->shutDown();
+                    return;    
+                }
+
+                (*num)++;
+
+            LOG_INFO("%d %s", *num, string(buf, count).c_str());
             conn->send(buf, count);
+            }
             break;
         default:
             return;    
@@ -33,20 +53,20 @@ void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const cha
 
 int main()
 {
-    TcpClient c(4, 1000);
+    TcpClient c(1, 1000);
 
     Address addr("127.0.0.1", 11181);
 
     LOG_INFO("start client");
     c.start();
 
-    for(int i = 0; i < 500; i++)
+    for(int i = 0; i < 1; i++)
     {
         c.connect(addr, std::tr1::bind(&onConnEvent, _1, _2, _3, _4));
     }
 
-    LOG_INFO("press any key to exit!");
-    getchar();
+    IOLoop* mainLoop = new IOLoop();
+    mainLoop->start();
 
     return 0;    
 }

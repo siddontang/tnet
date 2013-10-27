@@ -23,7 +23,7 @@ namespace tnet
     public:
         enum Event
         {
-            ConnectEvent,
+            ConnectEvent = 0,
             ConnectingEvent,
             ReadEvent,
             WriteCompleteEvent,

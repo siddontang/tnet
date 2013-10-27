@@ -76,7 +76,16 @@ namespace tnet
     {
         struct sockaddr_in sockAddr = addr.sockAddr();
     
-        return ::connect(sockFd, (struct sockaddr*)&sockAddr, sizeof(sockAddr));
+        int ret = ::connect(sockFd, (struct sockaddr*)&sockAddr, sizeof(sockAddr));
+        if(ret < 0)
+        {
+            int err = errno;
+            return err;    
+        }
+        else
+        {
+            return ret;
+        }
     }
 
     int SockUtil::setNoDelay(int sockFd, bool on)
