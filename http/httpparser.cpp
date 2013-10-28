@@ -1,6 +1,7 @@
 #include "httpparser.h"
 #include "httpserver.h"
 #include "log.h"
+#include "httpresponse.h"
 
 namespace tnet
 {
@@ -159,7 +160,7 @@ namespace tnet
     {
         m_request.majorVersion = m_parser.http_major;
         m_request.minorVersion = m_parser.http_minor;
-        m_request.method = m_parser.method;
+        m_request.method = (http_method)m_parser.method;
         
         if(!m_parser.upgrade)
         {
@@ -192,6 +193,11 @@ namespace tnet
         }
         else if(n != count)
         {
+            HttpResponse resp;
+            resp.statusCode = 500;
+
+            conn->send(resp.dump());
+
             //http parser error, shutdown
             conn->shutDown();
             return;    

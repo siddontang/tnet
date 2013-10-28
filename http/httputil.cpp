@@ -11,7 +11,7 @@ using namespace std;
 
 namespace tnet
 {
-    static const char* unknown = "Unknown Error";
+    static string unknown = "Unknown Error";
     
     class Reasons
     {
@@ -62,14 +62,14 @@ namespace tnet
             m_reasons[505] = "HTTP Version not supported";            
         }
 
-        const char* getReason(int code)
+        const string& getReason(int code)
         {
             if((size_t)code >= m_reasons.size())
             {
                 return unknown;
             }     
 
-            return m_reasons[code].empty() ? unknown : m_reasons[code].c_str();
+            return m_reasons[code].empty() ? unknown : m_reasons[code];
         }
 
     private:
@@ -78,7 +78,7 @@ namespace tnet
 
     static Reasons reason;
 
-    const char* HttpUtil::codeReason(int code)
+    const string& HttpUtil::codeReason(int code)
     {
         return reason.getReason(code);    
     }

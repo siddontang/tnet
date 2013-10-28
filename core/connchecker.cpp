@@ -8,6 +8,7 @@
 #include "connection.h"
 #include "misc.h"
 #include "iolooppooltimer.h"
+#include "log.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -16,7 +17,7 @@ namespace tnet
 {
     const int DefaultConnCheckRepeat = 10;
     const int DefaultConnCheckStep = 2000;
-    const int DefaultConnTimeout = 60;
+    const int DefaultConnTimeout = 20;
     const int DefaultConnectTimeout = 20; 
 
     ConnChecker::ConnChecker(const vector<IOLoop*>& connLoops, const vector<ConnectionPtr_t>& connections)
@@ -69,18 +70,18 @@ namespace tnet
 
         ev_tstamp now = ev_now(loop->evloop()); 
 
-        for(int i = 0; i < m_connCheckStep; ++i, ++index)
+        int connNum = int(m_connections.size());
+
+        for(int i = 0; i < m_connCheckStep && i < connNum; ++i, ++index)
         {
-            int fd = index % m_connections.size();
-            if(fd  == lastIndex && fd != index)
+            if(index == connNum)
             {
-                //travel a round
-                break;    
+                index = 0;    
             }
 
-            if(getHashLoop(fd) == loop)
+            if(getHashLoop(index) == loop)
             {
-                ConnectionPtr_t conn = m_connections[fd];
+                ConnectionPtr_t conn = m_connections[index];
                 if(conn)
                 {
                     ev_tstamp lastUpdate = conn->getLastUpdate();
@@ -93,6 +94,6 @@ namespace tnet
             }
         }
 
-        *num = index % m_connections.size();
+        *num = index;
     }
 }

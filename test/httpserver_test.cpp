@@ -36,9 +36,9 @@ void onHandler(const HttpRequest& request, const ConnectionPtr_t& conn)
     resp.setKeepAlive(true);
     resp.enableDate();
    
-    resp.body.append("first"); 
-    resp.body.append(1600, 'a');
-    resp.body.append("Hello World");
+    //resp.body.append("first"); 
+    //resp.body.append(1600, 'a');
+    //resp.body.append("Hello World");
     
     conn->send(resp.dump());
 }

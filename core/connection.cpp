@@ -254,8 +254,7 @@ namespace tnet
         {
             clearBuffer(m_sendBuffer);
 
-            m_loop->addTask(std::tr1::bind(m_func,  shared_from_this(), WriteCompleteEvent, "", 0));
-            //m_func(shared_from_this(), WriteCompleteEvent, NULL, 0);
+            m_func(shared_from_this(), WriteCompleteEvent, NULL, 0);
 
             resetIOEvent(EV_READ);
 
@@ -311,7 +310,7 @@ namespace tnet
 
         m_status = Disconnected;
    
-        m_loop->addTask(std::tr1::bind(m_func, shared_from_this(), CloseEvent, "", 0)); 
+        m_func(shared_from_this(), CloseEvent, NULL, 0);
     }
 
     void Connection::send(const char* data, int dataLen)

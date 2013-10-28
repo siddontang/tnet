@@ -63,12 +63,15 @@ namespace tnet
 
     void HttpUrl::parseQuery(const string& query)
     {
-        vector<string> args = StringUtil::split(query, "&");
+        static string sep1 = "&";
+        static string sep2 = "=";
+
+        vector<string> args = StringUtil::split(query, sep1);
         string key;
         string value;
         for(size_t i = 0; i < args.size(); ++i)
         {
-            vector<string> p = StringUtil::split(args[i], "=");
+            vector<string> p = StringUtil::split(args[i], sep2);
             if(p.size() == 2)
             {
                 key = p[0];

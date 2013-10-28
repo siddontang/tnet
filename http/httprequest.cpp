@@ -28,6 +28,6 @@ namespace tnet
         
         majorVersion = 1;
         minorVersion = 1;
-        method = 0;        
+        method = HTTP_GET;        
     }
 }

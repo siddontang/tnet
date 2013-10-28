@@ -5,6 +5,11 @@
 #include <map>
 #include <stdint.h>
 
+extern "C"
+{
+#include "http_parser.h"
+}
+
 namespace tnet
 {
     class HttpRequest
@@ -23,7 +28,7 @@ namespace tnet
         unsigned short majorVersion;
         unsigned short minorVersion;
 
-        unsigned char method;
+        http_method method;
     };
         
 }

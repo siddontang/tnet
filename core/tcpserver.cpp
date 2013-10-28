@@ -88,7 +88,7 @@ namespace tnet
                 std::tr1::bind(&TcpServer::onConnectionEvent, this, func, _1, _2, _3, _4)));
         
         m_connections[sockFd] = conn;    
-        
+    
         conn->onEstablished();
     }
 
@@ -124,7 +124,7 @@ namespace tnet
         (void)loop;
 
         int sockFd = conn->getSockFd();
-        
+
         m_connections[sockFd].reset();
 
         __sync_sub_and_fetch(&m_curConnections, 1);

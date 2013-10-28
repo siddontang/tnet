@@ -1,4 +1,5 @@
 #include "stringutil.h"
+#include <stdint.h>
 
 using namespace std;
 
@@ -31,5 +32,24 @@ namespace tnet
 
         return tokens;
     }
-    
+   
+    uint32_t StringUtil::hash(const string& str)
+    {
+        //use elf hash
+        uint32_t h = 0; 
+        uint32_t x = 0;
+        uint32_t i = 0;
+        uint32_t len = (uint32_t)str.size();
+        for(i = 0; i < len; ++i)
+        {
+            h = (h << 4) + str[i];
+            if((x = h & 0xF0000000L) != 0)
+            {
+                h ^= (x >> 24);    
+                h &= ~x;
+            }    
+        } 
+
+        return (h & 0x7FFFFFFF);
+    } 
 }

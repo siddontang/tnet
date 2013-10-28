@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <stdio.h>
+#include "log.h"
 
 using namespace std;
 
@@ -26,6 +27,7 @@ namespace tnet
             
         ev_async_init(&m_asyncWatcher, &IOLoop::onWaked);
         ev_check_init(&m_checkWatcher, &IOLoop::onChecked);
+        ev_set_priority(&m_checkWatcher, EV_MAXPRI);
     
         ev_async_start(m_loop, &m_asyncWatcher);
         ev_check_start(m_loop, &m_checkWatcher);

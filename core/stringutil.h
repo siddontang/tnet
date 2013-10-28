@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <stdint.h>
 
 namespace tnet
 {
@@ -10,6 +11,7 @@ namespace tnet
     {
     public:
         static std::vector<std::string> split(const std::string& src, const std::string& delim);
+        static uint32_t hash(const std::string& str);
     };    
 }
 

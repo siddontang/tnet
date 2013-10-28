@@ -9,7 +9,7 @@ namespace tnet
     class HttpUtil
     {
     public:
-        static const char* codeReason(int code);
+        static const std::string& codeReason(int code);
         static const char* methodStr(uint8_t method);
     
         static std::string escape(const std::string& src);

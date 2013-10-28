@@ -14,7 +14,6 @@ namespace tnet
     HttpResponse::HttpResponse()
         : statusCode(200)
     {
-        
     }
 
     HttpResponse::HttpResponse(int code, const Headers_t& headers, const string& body)
@@ -35,15 +34,12 @@ namespace tnet
         string str;
         
         char buf[1024];
-        int n = snprintf(buf, sizeof(buf), "HTTP/1.1 %d %s\r\n", statusCode, HttpUtil::codeReason(statusCode));    
+        int n = snprintf(buf, sizeof(buf), "HTTP/1.1 %d %s\r\n", statusCode, HttpUtil::codeReason(statusCode).c_str());    
 
         str.append(buf, n);
     
-        if(!body.empty())
-        {
-            n = snprintf(buf, sizeof(buf), "%d", int(body.size()));
-            headers["Content-Length"] = string(buf, n);
-        }
+        n = snprintf(buf, sizeof(buf), "%d", int(body.size()));
+        headers["Content-Length"] = string(buf, n);
 
         map<string, string>::const_iterator it = headers.begin();
         while(it != headers.end())
