@@ -36,13 +36,13 @@ void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const cha
             {
                 if((*num) > 10)
                 {
+                    LOG_INFO("shutdown");
                     conn->shutDown();
                     return;    
                 }
 
                 (*num)++;
 
-            LOG_INFO("%d %s", *num, string(buf, count).c_str());
             conn->send(buf, count);
             }
             break;
@@ -60,7 +60,7 @@ int main()
     LOG_INFO("start client");
     c.start();
 
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < 500; i++)
     {
         c.connect(addr, std::tr1::bind(&onConnEvent, _1, _2, _3, _4));
     }

@@ -100,7 +100,6 @@ namespace tnet
                 event = ConnectingEvent;    
                 ev_io_set(&m_io, m_io.fd, EV_WRITE);            
         
-                m_func(shared_from_this(), ConnectingEvent, NULL, 0);
             }
             else
             {
@@ -111,7 +110,6 @@ namespace tnet
         else
         {
             m_status = Connected;    
-            m_func(shared_from_this(), ConnectEvent, NULL, 0);
         }
 
         updateTime();
@@ -119,6 +117,8 @@ namespace tnet
         m_io.data = this;
 
         ev_io_start(m_loop->evloop(), &m_io);
+        
+        m_func(shared_from_this(), event, NULL, 0);
     }
 
     void Connection::shutDown()
@@ -149,6 +149,7 @@ namespace tnet
         if(revents & EV_ERROR)
         {
             conn->handleError();
+            return;
         }
         
         if(revents & EV_READ)
