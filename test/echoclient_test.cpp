@@ -60,7 +60,7 @@ int main()
     LOG_INFO("start client");
     c.start();
 
-    for(int i = 0; i < 500; i++)
+    for(int i = 0; i < 100; i++)
     {
         c.connect(addr, std::tr1::bind(&onConnEvent, _1, _2, _3, _4));
     }
