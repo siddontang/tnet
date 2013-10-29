@@ -158,6 +158,8 @@ namespace tnet
         
     int HttpParser::handleMessageComplete()
     {
+        m_request.parseUrl();
+
         m_request.majorVersion = m_parser.http_major;
         m_request.minorVersion = m_parser.http_minor;
         m_request.method = (http_method)m_parser.method;

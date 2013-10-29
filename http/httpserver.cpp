@@ -5,6 +5,8 @@
 #include "tcpserver.h"
 #include "log.h"
 #include "httpparser.h"
+#include "httprequest.h"
+#include "httpresponse.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -14,15 +16,15 @@ namespace tnet
     const int DefaultMaxHeaderSize = 4 * 1024;
     const int DefaultMaxBodySize = 1024 * 1024;
 
-    void dummyRequest(const HttpRequest& request, const std::tr1::shared_ptr<void>& conn)
-    {
-        
-    }
+    static string rootPath = "/";
 
-    void dummyCallback(const std::tr1::shared_ptr<Connection>& conn)
+    void notFoundCallback(const HttpRequest& request, const std::tr1::shared_ptr<Connection>& conn)
     {
-            
-    }
+        HttpResponse resp;
+        resp.statusCode = 404;
+        
+        conn->send(resp.dump());      
+    } 
 
     HttpServer::HttpServer(TcpServer* server)
         : m_server(server)
@@ -31,9 +33,7 @@ namespace tnet
     {
         HttpParser::initSettings();
     
-        m_requestCallback = std::tr1::bind(&dummyRequest, _1, _2);    
-        m_closeCallback = std::tr1::bind(&dummyCallback, _1);
-        m_errorCallback = std::tr1::bind(&dummyCallback, _1);
+        m_funcs[rootPath] = std::tr1::bind(&notFoundCallback, _1, _2);
     }
    
     HttpServer::~HttpServer()
@@ -68,5 +68,23 @@ namespace tnet
         }
 
         parser->onConnRead(conn, buf, count);
+    }
+
+    void HttpServer::setHttpCallback(const string& path, const HttpCallback_t& conn)
+    {
+        m_funcs[path] = conn;    
+    }
+
+    void HttpServer::onRequest(const HttpRequest& request, const ConnectionPtr_t& conn)
+    {
+        map<string, HttpCallback_t>::iterator iter = m_funcs.find(request.path);
+        if(iter == m_funcs.end())
+        {
+            m_funcs[rootPath](request, conn);  
+        }
+        else
+        {
+            (iter->second)(request, conn);    
+        }
     }
 }

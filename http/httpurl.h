@@ -12,7 +12,7 @@ namespace tnet
     {
     public:
         HttpUrl(const std::string& url);    
-    
+
         std::string schema;
         std::string host;
         std::string path;
