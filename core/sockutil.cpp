@@ -192,19 +192,33 @@ namespace tnet
         }
     }
 
+    static inline uint64_t swap64(uint64_t x)
+    {
+        return ((((x) & 0xff00000000000000LL) >> 56) | 
+                (((x) & 0x00ff000000000000LL) >> 40) | 
+                (((x) & 0x0000ff0000000000LL) >> 24) | 
+                (((x) & 0x000000ff00000000LL) >> 8) | 
+                (((x) & 0x00000000ff000000LL) << 8) | 
+                (((x) & 0x0000000000ff0000LL) << 24) | 
+                (((x) & 0x000000000000ff00LL) << 40) | 
+                (((x) & 0x00000000000000ffLL) << 56));
+    }
+
     uint64_t SockUtil::ntohll(uint64_t net)
     {
-#ifdef LINUX
-        return be64toh(net);
+#if __BYTE_ORDER==__LITTLE_ENDIAN
+        return swap64(net);
 #else
+        return net;
 #endif    
     }
 
     uint64_t SockUtil::htonll(uint64_t host)
     {
-#ifdef LINUX
-        return htobe64(host);
+#if __BYTE_ORDER==__LITTLE_ENDIAN
+        return swap64(host);
 #else
-#endif    
+        return host;
+#endif
     }
 }
