@@ -24,7 +24,7 @@ namespace tnet
 
     typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
 
-    static void dummyConnFunc(const ConnectionPtr_t&, Connection::Event, const char*, int)
+    static void dummyConnFunc(const ConnectionPtr_t&, Connection::Event, const char*, size_t)
     {
     }
 

@@ -21,9 +21,17 @@ set(CORE_SRCS
 
 set(EV_SRCS ./libev/ev.c)
 
+set(POLARSSL_SRCS 
+    ./polarssl/base64.c
+    ./polarssl/md5.c
+    ./polarssl/sha1.c)
+
+set(SRCS ${CORE_SRCS} ${EV_SRCS} ${POLARSSL_SRCS})
+
 #define some libev macro to proper use libev
 add_definitions(-DEV_STANDALONE=1 -DEV_USE_FLOOR -DEV_USE_NANOSLEEP -DEV_MULTIPLICITY=1)
 
+include_directories(".")
 include_directories("./libev")
 
 set(DEP_LIB pthread)
@@ -36,7 +44,7 @@ else()
     add_definitions(-DEV_USE_SELECT)
 endif()
 
-add_library(tnet_core ${CORE_SRCS} ${EV_SRCS})
+add_library(tnet_core ${SRCS})
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 

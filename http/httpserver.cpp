@@ -46,7 +46,7 @@ namespace tnet
         return m_server->listen(addr, std::tr1::bind(&HttpServer::onConnectionEvent, this, _1, _2, _3, _4));     
     }
 
-    void HttpServer::onConnectionEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count)
+    void HttpServer::onConnectionEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buf, size_t count)
     {
         switch(event)
         {

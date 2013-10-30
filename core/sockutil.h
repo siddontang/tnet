@@ -1,6 +1,8 @@
 #ifndef _SOCKUTIL_H_
 #define _SOCKUTIL_H_
 
+#include <stdint.h>
+
 namespace tnet
 {
     class Address;
@@ -24,6 +26,9 @@ namespace tnet
         static int getRemoteAddr(int sockFd, Address& addr);
 
         static int getSockError(int sockFd);
+    
+        static uint64_t ntohll(uint64_t net);
+        static uint64_t htonll(uint64_t host);
     };
 
 }

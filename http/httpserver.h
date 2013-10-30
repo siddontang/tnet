@@ -46,7 +46,7 @@ namespace tnet
         void setHttpCallback(const std::string& path, const HttpCallback_t& func);
 
     private:
-        void onConnectionEvent(const ConnectionPtr_t&, Connection::Event, const char*, int);
+        void onConnectionEvent(const ConnectionPtr_t&, Connection::Event, const char*, size_t);
         void handleRead(const ConnectionPtr_t& conn, const char* buf, int count);
     
         void onRequest(const HttpRequest& request, const ConnectionPtr_t& conn);

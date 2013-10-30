@@ -9,6 +9,11 @@
 #include <netinet/in.h>
 #include <assert.h>
 
+#ifdef LINUX
+#include <endian.h>
+#else
+#endif
+
 #include "address.h"
 #include "misc.h"
 #include "log.h"
@@ -185,5 +190,21 @@ namespace tnet
         {
             return opt;    
         }
+    }
+
+    uint64_t SockUtil::ntohll(uint64_t net)
+    {
+#ifdef LINUX
+        return be64toh(net);
+#else
+#endif    
+    }
+
+    uint64_t SockUtil::htonll(uint64_t host)
+    {
+#ifdef LINUX
+        return htobe64(host);
+#else
+#endif    
     }
 }

@@ -41,7 +41,7 @@ namespace tnet
         };
 
         typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnectionFunc_t;
+        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, size_t)> ConnectionFunc_t;
 
         Connection(IOLoop* loop, int sockFd, const ConnectionFunc_t& func);
         ~Connection();    
