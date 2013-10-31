@@ -12,11 +12,11 @@ using namespace std::tr1::placeholders;
 
 typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
 
-void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count)
+void onConnEvent(const ConnectionPtr_t& conn, ConnEvent event, const char* buf, int count)
 {
     switch(event)
     {
-        case Connection::ReadEvent:
+        case Conn_ReadEvent:
             conn->send(buf, count);
             return;
         default:

@@ -15,9 +15,6 @@ endif()
 add_executable(httpserver_test httpserver_test.cpp)
 target_link_libraries(httpserver_test ${DEP_LIB})
 
-add_executable(httpurl_test httpurl_test.cpp)
-target_link_libraries(httpurl_test ${DEP_LIB})
-
 add_executable(echoserver_test echoserver_test.cpp)
 target_link_libraries(echoserver_test ${DEP_LIB})
 

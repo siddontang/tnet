@@ -19,6 +19,7 @@
 #include "connection.h"
 #include "timer.h"
 #include "connchecker.h"
+#include "connection.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -49,7 +50,8 @@ namespace tnet
    
         //we prealloc connection vector and never change its size
         m_connections.resize(int(m_maxConnections * 1.5) + 1024);
-   
+  
+        Connection::setReleaseFunc(std::tr1::bind(&TcpServer::deleteConnection, this, _1)); 
    
         m_connChecker = new ConnChecker(m_connLoops, m_connections);
     }
@@ -84,22 +86,13 @@ namespace tnet
 
     void TcpServer::newConnectionInLoop(IOLoop* loop, int sockFd, const ConnectionFunc_t& func)
     {
-        ConnectionPtr_t conn(new Connection(loop, sockFd, 
-                std::tr1::bind(&TcpServer::onConnectionEvent, this, func, _1, _2, _3, _4)));
+        ConnectionPtr_t conn(new Connection(loop, sockFd));
+        
+        conn->setEventCallback(func); 
         
         m_connections[sockFd] = conn;    
     
         conn->onEstablished();
-    }
-
-    void TcpServer::onConnectionEvent(const ConnectionFunc_t& func, const ConnectionPtr_t& conn,
-                                      Connection::Event event, const char* buf, int count)
-    {
-        func(conn, event, buf, count);
-        if(event == Connection::CloseEvent)
-        {
-            deleteConnection(conn);    
-        }
     }
 
     void TcpServer::deleteConnection(const ConnectionPtr_t& conn)

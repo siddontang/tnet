@@ -7,6 +7,7 @@
 #include "ioloopthreadpool.h"
 #include "connchecker.h"
 #include "log.h"
+#include "connection.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -22,6 +23,8 @@ namespace tnet
         m_loops = m_pool->getLoops();
 
         m_connections.resize(int(connNum * 1.5));
+
+        Connection::setReleaseFunc(std::tr1::bind(&TcpClient::deleteConnection, this, _1)); 
 
         m_checker = new ConnChecker(m_pool->getLoops(), m_connections);
     }
@@ -63,20 +66,13 @@ namespace tnet
 
         IOLoop* loop = m_pool->getHashLoop(fd);
 
-        ConnectionPtr_t conn(new Connection(loop, fd, std::tr1::bind(&TcpClient::onConnEvent, this, func, _1, _2, _3, _4)));
+        ConnectionPtr_t conn(new Connection(loop, fd));
+        
+        conn->setEventCallback(func);
         m_connections[fd] = conn;
 
         conn->connect(addr);
         return fd;
-    }
-
-    void TcpClient::onConnEvent(const ConnectionFunc_t& func, const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count)
-    {
-        func(conn, event, buf, count);
-        if(event == Connection::CloseEvent)
-        {
-            deleteConnection(conn);    
-        }    
     }
 
     void TcpClient::deleteConnection(const ConnectionPtr_t& conn)

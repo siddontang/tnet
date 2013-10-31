@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "connection.h"
+#include "connevent.h"
 
 namespace tnet
 {
@@ -27,13 +27,12 @@ namespace tnet
         void start();
         void stop();
 
-        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnectionFunc_t;
+        typedef std::tr1::function<void (const ConnectionPtr_t&, ConnEvent, const char*, int)> ConnectionFunc_t;
         int connect(const Address& addr, const ConnectionFunc_t& func);
 
         const std::vector<IOLoop*>& getLoops() { return m_loops; }
 
     private:
-        void onConnEvent(const ConnectionFunc_t& func, const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count);
         void deleteConnection(const ConnectionPtr_t& conn);
         void deleteConnectionInLoop(const ConnectionPtr_t& conn);
 

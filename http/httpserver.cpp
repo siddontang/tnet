@@ -8,6 +8,7 @@
 #include "httprequest.h"
 #include "httpresponse.h"
 #include "wsconnection.h"
+#include "connection.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -54,11 +55,11 @@ namespace tnet
         return m_server->listen(addr, std::tr1::bind(&HttpServer::onConnectionEvent, this, _1, _2, _3, _4));     
     }
 
-    void HttpServer::onConnectionEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buf, size_t count)
+    void HttpServer::onConnectionEvent(const ConnectionPtr_t& conn, ConnEvent event, const char* buf, size_t count)
     {
         switch(event)
         {
-            case Connection::ReadEvent:
+            case Conn_ReadEvent:
                 handleRead(conn, buf, count);
                 return;
             default:

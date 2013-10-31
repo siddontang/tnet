@@ -8,13 +8,15 @@
 #include <stdio.h>
 #include <string>
 
+#include "connection.h"
+
 using namespace tnet;
 using namespace std;
 using namespace std::tr1::placeholders;
 
 typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
 
-void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count)
+void onConnEvent(const ConnectionPtr_t& conn, ConnEvent event, const char* buf, int count)
 {
     std::tr1::shared_ptr<int> num = std::tr1::static_pointer_cast<int>(conn->getContext());
     if(!num)
@@ -25,14 +27,14 @@ void onConnEvent(const ConnectionPtr_t& conn, Connection::Event event, const cha
 
     switch(event)
     {
-        case Connection::ConnectingEvent:
+        case Conn_ConnectingEvent:
             LOG_INFO("connecting");
             break;
-        case Connection::ConnectEvent:
+        case Conn_ConnectEvent:
             LOG_INFO("connect");
             conn->send("Hello World");
             break;
-        case Connection::ReadEvent:
+        case Conn_ReadEvent:
             {
                 if((*num) > 10)
                 {

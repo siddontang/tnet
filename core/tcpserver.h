@@ -9,7 +9,7 @@
 #include "nocopyable.h"
 #include "address.h"
 #include "threadutil.h"
-#include "connection.h"
+#include "connevent.h"
 
 namespace tnet 
 {   
@@ -30,7 +30,7 @@ namespace tnet
         ~TcpServer();
       
         typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, int)> ConnectionFunc_t; 
+        typedef std::tr1::function<void (const ConnectionPtr_t&, ConnEvent, const char*, int)> ConnectionFunc_t; 
       
         int listen(const Address& addr, const ConnectionFunc_t& func);
        
@@ -53,8 +53,6 @@ namespace tnet
 
         void deleteConnection(const ConnectionPtr_t& conn);
         void deleteConnectionInLoop(const ConnectionPtr_t& conn);
-
-        void onConnectionEvent(const ConnectionFunc_t& func, const ConnectionPtr_t& conn, Connection::Event event, const char* buf, int count);
 
         const std::vector<ConnectionPtr_t>& getConnections() { return m_connections; }
 

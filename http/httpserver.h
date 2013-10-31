@@ -2,11 +2,12 @@
 #define _HTTPSERVER_H_
 
 #include <tr1/functional>
+#include <tr1/memory>
 
 #include <map>
 
 #include "nocopyable.h"
-#include "connection.h"
+#include "connevent.h"
 #include "wsevent.h"
 
 extern "C"
@@ -22,6 +23,7 @@ namespace tnet
     class HttpRequest;
     class HttpParser;
     class HttpResponse;
+    class Connection;
 
     class HttpServer : public nocopyable
     {
@@ -50,7 +52,7 @@ namespace tnet
         void setWsCallback(const std::string& path, const WsCallback_t& func);
 
     private:
-        void onConnectionEvent(const ConnectionPtr_t&, Connection::Event, const char*, size_t);
+        void onConnectionEvent(const ConnectionPtr_t&, ConnEvent, const char*, size_t);
         void handleRead(const ConnectionPtr_t& conn, const char* buf, size_t count);
     
         void onRequest(const ConnectionPtr_t& conn, const HttpRequest& request);

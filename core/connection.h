@@ -11,6 +11,7 @@ extern "C"
 }
 
 #include "nocopyable.h"
+#include "connevent.h"
 
 namespace tnet
 {
@@ -21,16 +22,6 @@ namespace tnet
                      , public std::tr1::enable_shared_from_this<Connection> 
     {
     public:
-        enum Event
-        {
-            ConnectEvent = 0,
-            ConnectingEvent,
-            ReadEvent,
-            WriteCompleteEvent,
-            ErrorEvent,
-            CloseEvent,
-        };
-        
         enum Status
         {
             None,
@@ -41,10 +32,15 @@ namespace tnet
         };
 
         typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::function<void (const ConnectionPtr_t&, Connection::Event, const char*, size_t)> ConnectionFunc_t;
+        typedef std::tr1::function<void (const ConnectionPtr_t&, ConnEvent, const char*, size_t)> EventCallback_t;
+        typedef std::tr1::function<void (const ConnectionPtr_t&)> ReleaseFunc_t;
 
-        Connection(IOLoop* loop, int sockFd, const ConnectionFunc_t& func);
+        Connection(IOLoop* loop, int sockFd);
         ~Connection();    
+
+        static void setReleaseFunc(const ReleaseFunc_t& func) { ms_releaseFunc = func; }
+
+        void setEventCallback(const EventCallback_t& func) { m_func = func; }
 
         void shutDown();
         
@@ -95,13 +91,15 @@ namespace tnet
 
         Status m_status;
         
-        ConnectionFunc_t m_func;
+        EventCallback_t m_func;
     
         std::string m_sendBuffer;
     
         ev_tstamp m_lastUpdate;
     
         std::tr1::shared_ptr<void> m_context;
+    
+        static ReleaseFunc_t ms_releaseFunc;
     };    
 }
 

@@ -24,14 +24,24 @@ namespace tnet
 
     typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
 
-    static void dummyConnFunc(const ConnectionPtr_t&, Connection::Event, const char*, size_t)
+    static void dummyEventCallback(const ConnectionPtr_t&, ConnEvent, const char*, size_t)
     {
     }
 
-    Connection::Connection(IOLoop* loop, int sockFd, const ConnectionFunc_t& func)
+    static void dummyReleaseFunc(const ConnectionPtr_t&)
+    {}
+
+    typedef std::tr1::function<void (const ConnectionPtr_t&)> ReleaseFunc_t;
+
+    ReleaseFunc_t initReleaseFunc() { return std::tr1::bind(&dummyReleaseFunc, _1); }
+
+    ReleaseFunc_t Connection::ms_releaseFunc = initReleaseFunc();
+
+    Connection::Connection(IOLoop* loop, int sockFd)
         : m_loop(loop)
-        , m_func(func)
     {
+        m_func = std::tr1::bind(&dummyEventCallback, _1, _2, _3, _4);
+
         m_status = None;
         
         ev_io_init(&m_io, Connection::onData, sockFd, EV_READ);
@@ -90,14 +100,14 @@ namespace tnet
     {
         int err = SockUtil::connect(m_io.fd, addr);
         
-        Connection::Event event = ConnectEvent;
+        ConnEvent event = Conn_ConnectEvent;
 
         if(err < 0)
         {
             if(err == EINPROGRESS)
             {
                 m_status = Connecting;
-                event = ConnectingEvent;    
+                event = Conn_ConnectingEvent;    
                 ev_io_set(&m_io, m_io.fd, EV_WRITE);            
         
             }
@@ -184,7 +194,7 @@ namespace tnet
 
         updateTime();
 
-        m_func(shared_from_this(), ConnectEvent, NULL, 0);
+        m_func(shared_from_this(), Conn_ConnectEvent, NULL, 0);
     }
 
     void Connection::handleRead()
@@ -203,7 +213,7 @@ namespace tnet
 
         if(n > 0)
         {
-            m_func(shared_from_this(), ReadEvent, buf, n); 
+            m_func(shared_from_this(), Conn_ReadEvent, buf, n); 
             
             updateTime();
 
@@ -254,7 +264,7 @@ namespace tnet
         {
             clearBuffer(m_sendBuffer);
 
-            m_func(shared_from_this(), WriteCompleteEvent, NULL, 0);
+            m_func(shared_from_this(), Conn_WriteCompleteEvent, NULL, 0);
 
             resetIOEvent(EV_READ);
 
@@ -290,7 +300,7 @@ namespace tnet
 
     void Connection::handleError()
     {
-        m_func(shared_from_this(), ErrorEvent, NULL, 0);
+        m_func(shared_from_this(), Conn_ErrorEvent, NULL, 0);
 
         handleClose();
     }
@@ -310,7 +320,9 @@ namespace tnet
 
         m_status = Disconnected;
    
-        m_func(shared_from_this(), CloseEvent, NULL, 0);
+        m_func(shared_from_this(), Conn_CloseEvent, NULL, 0);
+    
+        ms_releaseFunc(shared_from_this());
     }
 
     void Connection::send(const char* data, int dataLen)

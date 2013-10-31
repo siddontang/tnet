@@ -4,7 +4,6 @@ set(HTTP_SRCS
     httpresponse.cpp
     httpserver.cpp
     httputil.cpp
-    httpurl.cpp
     httpparser.cpp
     wsconnection.cpp
     wsutil.cpp
