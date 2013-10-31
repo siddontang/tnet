@@ -7,6 +7,7 @@
 
 #include "nocopyable.h"
 #include "connection.h"
+#include "wsevent.h"
 
 extern "C"
 {
@@ -45,11 +46,15 @@ namespace tnet
         typedef std::tr1::function<void (const HttpRequest&, const ConnectionPtr_t& conn)> HttpCallback_t;
         void setHttpCallback(const std::string& path, const HttpCallback_t& func);
 
+        typedef std::tr1::function<void (const ConnectionPtr_t&, WsEvent, const std::string)> WsCallback_t;
+        void setWsCallback(const std::string& path, const WsCallback_t& func);
+
     private:
         void onConnectionEvent(const ConnectionPtr_t&, Connection::Event, const char*, size_t);
-        void handleRead(const ConnectionPtr_t& conn, const char* buf, int count);
+        void handleRead(const ConnectionPtr_t& conn, const char* buf, size_t count);
     
-        void onRequest(const HttpRequest& request, const ConnectionPtr_t& conn);
+        void onRequest(const ConnectionPtr_t& conn, const HttpRequest& request);
+        void onWebsocket(const ConnectionPtr_t& conn, const HttpRequest& request, const char* buffer, size_t count);
 
     private:
         TcpServer* m_server;
@@ -57,7 +62,9 @@ namespace tnet
         int m_maxHeaderSize;
         int m_maxBodySize;
     
-        std::map<std::string, HttpCallback_t> m_funcs;        
+        std::map<std::string, HttpCallback_t> m_httpFuncs;        
+
+        std::map<std::string, WsCallback_t> m_wsFuncs;
     };
     
 }

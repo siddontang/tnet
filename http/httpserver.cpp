@@ -7,6 +7,7 @@
 #include "httpparser.h"
 #include "httprequest.h"
 #include "httpresponse.h"
+#include "wsconnection.h"
 
 using namespace std;
 using namespace std::tr1::placeholders;
@@ -18,13 +19,20 @@ namespace tnet
 
     static string rootPath = "/";
 
-    void notFoundCallback(const HttpRequest& request, const std::tr1::shared_ptr<Connection>& conn)
+    typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
+
+    void httpNotFoundCallback(const HttpRequest& request, const std::tr1::shared_ptr<Connection>& conn)
     {
         HttpResponse resp;
         resp.statusCode = 404;
         
         conn->send(resp.dump());      
     } 
+
+    void wsNotFoundCallback(const ConnectionPtr_t& conn, WsEvent event, const string& message)
+    {
+        conn->shutDown();    
+    }
 
     HttpServer::HttpServer(TcpServer* server)
         : m_server(server)
@@ -33,7 +41,7 @@ namespace tnet
     {
         HttpParser::initSettings();
     
-        m_funcs[rootPath] = std::tr1::bind(&notFoundCallback, _1, _2);
+        m_httpFuncs[rootPath] = std::tr1::bind(&httpNotFoundCallback, _1, _2);
     }
    
     HttpServer::~HttpServer()
@@ -58,33 +66,105 @@ namespace tnet
         }
     }
 
-    void HttpServer::handleRead(const ConnectionPtr_t& conn, const char* buf, int count)
+    class HttpContext
     {
-        HttpParserPtr_t parser = std::tr1::static_pointer_cast<HttpParser>(conn->getContext());    
-        if(!parser)
+    public:
+        enum Type
         {
-            parser = HttpParserPtr_t(new HttpParser(this, conn));
-            conn->setContext(parser);    
+            HttpType,
+            WsType,    
+        };
+
+        HttpContext(Type t, void* c)
+        {
+            type = t;
+            context = c;
         }
 
-        parser->onConnRead(conn, buf, count);
+        ~HttpContext()
+        {
+            if(type == HttpType)
+            {
+                delete static_cast<HttpParser*>(context);    
+            }
+            else
+            {
+                delete static_cast<WsConnection*>(context);    
+            }
+        }
+
+        Type type;
+        void* context;
+    };
+
+    typedef std::tr1::shared_ptr<HttpContext> HttpContextPtr_t;
+
+    void HttpServer::handleRead(const ConnectionPtr_t& conn, const char* buf, size_t count)
+    {
+        HttpContextPtr_t c = std::tr1::static_pointer_cast<HttpContext>(conn->getContext());    
+        if(!c)
+        {
+            HttpParser* parser = new HttpParser(this, conn);
+            c = HttpContextPtr_t(new HttpContext(HttpContext::HttpType, parser));
+            conn->setContext(c);
+        }
+
+        if(c->type == HttpContext::HttpType)
+        {
+            HttpParser* parser = static_cast<HttpParser*>(c->context);
+            parser->onConnRead(conn, buf, count);
+        }
+        else
+        { 
+            WsConnection* ws = static_cast<WsConnection*>(c->context);
+            ws->onRead(conn, buf, count);
+        }
+
     }
 
     void HttpServer::setHttpCallback(const string& path, const HttpCallback_t& conn)
     {
-        m_funcs[path] = conn;    
+        m_httpFuncs[path] = conn;    
     }
 
-    void HttpServer::onRequest(const HttpRequest& request, const ConnectionPtr_t& conn)
+    void HttpServer::onRequest(const ConnectionPtr_t& conn, const HttpRequest& request)
     {
-        map<string, HttpCallback_t>::iterator iter = m_funcs.find(request.path);
-        if(iter == m_funcs.end())
+        map<string, HttpCallback_t>::iterator iter = m_httpFuncs.find(request.path);
+        if(iter == m_httpFuncs.end())
         {
-            m_funcs[rootPath](request, conn);  
+            m_httpFuncs[rootPath](request, conn);  
         }
         else
         {
             (iter->second)(request, conn);    
+        }
+    }
+
+    void HttpServer::setWsCallback(const string& path, const WsCallback_t& func)
+    {
+        m_wsFuncs[path] = func;    
+    }
+
+    void HttpServer::onWebsocket(const ConnectionPtr_t& conn, const HttpRequest& request, const char* buffer, size_t count)
+    {
+        map<string, WsCallback_t>::iterator iter = m_wsFuncs.find(request.path);
+        if(iter == m_wsFuncs.end())
+        {
+            conn->shutDown();
+        }
+        else
+        {
+            WsConnection* wsConn = new WsConnection(iter->second);
+            HttpContextPtr_t c(new HttpContext(HttpContext::WsType, wsConn));
+
+            if(wsConn->onHandshake(conn, request) == 0)
+            { 
+                conn->setContext(c);
+
+                wsConn->onRead(conn, buffer, count);
+            }
+           
+            return;
         }
     }
 }

@@ -32,6 +32,14 @@ namespace tnet
         for_each_all(c, default_delete());    
     }
 
+
+    template<typename T>
+    void clear_capacity(T& c)
+    {
+        T tmp;
+        c.swap(tmp);    
+    }
+
     const char* errorMsg(int errorNum); 
 }
 

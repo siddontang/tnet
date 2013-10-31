@@ -23,3 +23,6 @@ target_link_libraries(echoserver_test ${DEP_LIB})
 
 add_executable(echoclient_test echoclient_test.cpp)
 target_link_libraries(echoclient_test ${DEP_LIB})
+
+add_executable(wsechoserver_test wsechoserver_test.cpp)
+target_link_libraries(wsechoserver_test ${DEP_LIB})

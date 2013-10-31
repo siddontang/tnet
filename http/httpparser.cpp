@@ -19,6 +19,7 @@ namespace tnet
 
     HttpParser::~HttpParser()
     {
+        LOG_INFO("parser destroyed");
     }
 
     void HttpParser::initSettings()
@@ -169,7 +170,7 @@ namespace tnet
             ConnectionPtr_t conn = m_conn.lock();
             if(conn)
             {
-                m_server->onRequest(m_request, conn);
+                m_server->onRequest(conn, m_request);
             }
             else
             {
@@ -185,13 +186,13 @@ namespace tnet
         return (m_parser.nread <= (uint32_t)m_server->getMaxHeaderSize());
     }
 
-    void HttpParser::onConnRead(const ConnectionPtr_t& conn, const char* buffer, int count)
+    void HttpParser::onConnRead(const ConnectionPtr_t& conn, const char* buffer, size_t count)
     {
         int n = http_parser_execute(&m_parser, &ms_settings, buffer, count);
         if(m_parser.upgrade)
         {
             //websokcet here, we may later support it, now shutdown
-            conn->shutDown();
+            m_server->onWebsocket(conn, m_request, buffer + n, count - n);
         }
         else if(n != count)
         {

@@ -48,7 +48,7 @@ namespace tnet
 
         bool validHeaderSize();
 
-        void onConnRead(const ConnectionPtr_t& conn, const char* buffer, int count);
+        void onConnRead(const ConnectionPtr_t& conn, const char* buffer, size_t count);
 
     private:    
         static struct http_parser_settings ms_settings;

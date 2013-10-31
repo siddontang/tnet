@@ -12,19 +12,24 @@
 #include "stringutil.h"
 #include "sockutil.h"
 #include "log.h"
+#include "misc.h"
 
 using namespace std;
+using namespace std::tr1::placeholders;
 
 namespace tnet
-{
-    WsConnection::WsConnection()
+{        
+    //chrome may not support masking, so we only can disable it
+    bool WsConnection::ms_maskOutgoing = false;
+
+    WsConnection::WsConnection(const EventCallback_t& func)
     {
-        
+        m_func = func;
     }
 
     WsConnection::~WsConnection()
     {
-        
+        LOG_INFO("ws destoryed");
     }
     
     void WsConnection::handleError(const ConnectionPtr_t& conn, int statusCode, const string& message)
@@ -133,19 +138,25 @@ namespace tnet
         }
 
         conn->send(resp.dump());
+
+        m_status = FrameStart;
+
+        m_func(conn, Ws_OpenEvent, string());
+
         return 0;
     }
 
-#define HANDLE(func) ret = func(data + readLen, count - readLen); \
+#define HANDLE(func) \
+    ret = func(data + readLen, count - readLen); \
     readLen += (ret > 0 ? ret : 0);
 
 
-    ssize_t WsConnection::onRead(const char* data, size_t count)
+    ssize_t WsConnection::onRead(const ConnectionPtr_t& conn, const char* data, size_t count)
     {
         size_t readLen = 0;
         ssize_t ret = 1;
 
-        while(readLen >= count && ret > 0)
+        while(readLen < count && ret > 0)
         {
             switch(m_status)
             {
@@ -165,22 +176,40 @@ namespace tnet
                     break;
                 case FrameData:
                     HANDLE(onFrameData);
+                    break;
+                case FrameFinal:
+                    ret = handleFrameData(conn);
+                    readLen += (ret > 0 ? ret : 0);
+                    break;
                 default:
                     return -1;
                     break; 
             }
         }
-
+        
+        if(ret > 0 && m_status == FrameFinal)
+        {
+            ret = handleFrameData(conn); 
+        }
+        
         if(ret < 0)
         {
-            m_status = FrameError;    
-        }
+            LOG_ERROR("onReadError");
 
+            m_status = FrameError;
+            m_func(conn, Ws_ErrorEvent, string());
+            
+            //an error occur, only to shutdown connection
+            conn->shutDown();    
+        }
+        
         return ret;
     }
 
     ssize_t WsConnection::onFrameStart(const char* data, size_t count)
     {
+        m_frame.clear();
+
         char header = data[0];
         
         if(header & 0x70)
@@ -196,12 +225,13 @@ namespace tnet
         return 1;    
     }
 
-    ssize_t WsConnection::onFramePayloadLenOver(size_t payloadLen)
+    ssize_t WsConnection::handleFramePayloadLen(size_t payloadLen)
     {
         m_payloadLen = payloadLen;
-
-        m_frame.clear();    
+        
         m_frame.reserve(payloadLen);
+        m_frame.clear();
+
         m_status = isMaskFrame() ? FrameMaskingKey : FrameData;    
         
         return 0;
@@ -222,7 +252,7 @@ namespace tnet
         
         if(payloadLen < 126)
         {
-            onFramePayloadLenOver(payloadLen);
+            handleFramePayloadLen(payloadLen);
         }
         else if(payloadLen == 126)
         {
@@ -244,7 +274,8 @@ namespace tnet
     ssize_t WsConnection::tryRead(const char* data, size_t count, size_t tryReadData)
     {
         assert(m_frame.size() < tryReadData);
-        if(m_frame.size() + count < tryReadData)
+        size_t pendingSize = m_frame.size();
+        if(pendingSize + count < tryReadData)
         {
             m_frame.append(data, count);
             return 0;    
@@ -252,7 +283,7 @@ namespace tnet
 
         m_frame.append(data, tryReadData - m_frame.size());
 
-        return tryReadData - m_frame.size();
+        return tryReadData - pendingSize;
     }
 
     ssize_t WsConnection::onFramePayloadLen16(const char* data, size_t count)
@@ -263,12 +294,12 @@ namespace tnet
             return readLen;    
         }
        
-        uint16_t payloadLen = 0;
-        memcpy(&payloadLen, m_frame.data(), sizeof(uint16_t));
+        uint16_t payloadLen = *(uint16_t*)m_frame.data();
+        //memcpy(&payloadLen, m_frame.data(), sizeof(uint16_t));
         
         payloadLen = ntohs(payloadLen); 
 
-        onFramePayloadLenOver(payloadLen);
+        handleFramePayloadLen(payloadLen);
 
         return readLen; 
     }
@@ -281,13 +312,13 @@ namespace tnet
             return readLen;    
         }
 
-        uint64_t payloadLen = 0;
-        memcpy(&payloadLen, m_frame.data(), sizeof(uint64_t));
+        uint64_t payloadLen = *(uint64_t*)m_frame.data();
+        //memcpy(&payloadLen, m_frame.data(), sizeof(uint64_t));
         
         //todo ntohl64
         payloadLen = SockUtil::ntohll(payloadLen);
         
-        onFramePayloadLenOver(payloadLen);
+        handleFramePayloadLen(payloadLen);
 
         return readLen;
     }
@@ -312,6 +343,7 @@ namespace tnet
     ssize_t WsConnection::onFrameData(const char* data, size_t count)
     {
         ssize_t readLen = tryRead(data, count, m_payloadLen);
+
         if(readLen == 0)
         {
             return 0;    
@@ -325,16 +357,11 @@ namespace tnet
             }    
         }
 
-        if(onFrameDataOver() < 0)
-        {
-            return -1;    
-        }
-
-        m_status = FrameStart;
+        m_status = FrameFinal;
         return readLen;
     }
 
-    ssize_t WsConnection::onFrameDataOver()
+    ssize_t WsConnection::handleFrameData(const ConnectionPtr_t& conn)
     {
         uint8_t opcode;
         string data;
@@ -362,7 +389,7 @@ namespace tnet
             {
                 opcode = m_lastOpcode;
                 data = m_cache;
-                m_cache.clear();            
+                clear_capacity(m_cache);
             }
         }
         else
@@ -386,37 +413,46 @@ namespace tnet
             }
         }
 
-        m_frame.clear();
+        clear_capacity(m_frame);
 
         if(isFinalFrame())
         {
-            if(onMessage(opcode, data) < 0)
+            if(handleMessage(conn, opcode, data) < 0)
             {
                 return -1;    
             }            
         }
 
+        m_status = FrameStart;
+
         return 0;
     }
 
-    ssize_t WsConnection::onMessage(uint8_t opcode, const string& data)
+    ssize_t WsConnection::handleMessage(const ConnectionPtr_t& conn, uint8_t opcode, const string& data)
     {
         switch(opcode)
         {
             case 0x1:
                 //utf-8 data
+                m_func(conn, Ws_MessageEvent, data);
                 break;    
             case 0x2:
                 //binary data
+                m_func(conn, Ws_MessageEvent, data);
                 break;
             case 0x8:
                 //clsoe
+                m_func(conn, Ws_CloseEvent, string());
+                
+                conn->shutDown();
                 break;
             case 0x9:
                 //ping
+                sendFrame(conn, true, 0xA, data);
                 break;
             case 0xA:
                 //pong
+                m_func(conn, Ws_PongEvent, data);
                 break;
             default:
                 //error
@@ -424,4 +460,78 @@ namespace tnet
         }    
     } 
 
+    void WsConnection::ping(const ConnectionPtr_t& conn, const string& message)
+    {
+        sendFrame(conn, true, 0x9, message);
+    }
+
+    void WsConnection::send(const ConnectionPtr_t& conn, const string& message, bool binary)
+    {
+        char opcode = binary ? 0x2 : 0x1;
+
+        //for utf-8, we assume message is already utf-8
+        sendFrame(conn, true, opcode, message);
+    }
+
+    void WsConnection::close(const ConnectionPtr_t& conn)
+    {
+        sendFrame(conn, true, (char)0x8);    
+    }
+
+    void WsConnection::sendFrame(const ConnectionPtr_t& conn, bool finalFrame, char opcode, const string& message)
+    {
+        string buf;
+
+        opcode |= (finalFrame ? 0x80 : 0x00);
+        
+        buf.append((char*)&opcode, sizeof(opcode));
+
+        char mask = ms_maskOutgoing ? 0x80 : 0x00;
+
+        size_t payloadLen = message.size();
+
+        if(payloadLen < 126)
+        {
+            char payload = mask | (char)payloadLen;
+            buf.append((char*)&payload, sizeof(payload));
+        }
+        else if(payloadLen <= 0xFFFF)
+        {
+            char payload = mask | 126;
+            buf.append((char*)&payload, sizeof(payload));
+            uint16_t len = htons((uint16_t)payloadLen);
+
+            buf.append((char*)&len, sizeof(uint16_t));
+        }
+        else
+        {    
+            char payload = mask | 127;
+            buf.append((char*)&payload, sizeof(payload));
+        
+            uint64_t len = SockUtil::htonll(payloadLen);
+            buf.append((char*)&len, sizeof(uint64_t));
+        }
+
+        if(ms_maskOutgoing)
+        {
+            int randomKey = rand();
+            char maskingKey[4];
+            memcpy(maskingKey, &randomKey, sizeof(maskingKey));
+
+            buf.append(maskingKey, 4);
+
+            size_t pos = buf.size();
+            buf.append(message);
+            for(size_t i = 0; i < buf.size() - pos; ++i)
+            {
+                buf[i + pos] = buf[i + pos] ^ maskingKey[i % 4];     
+            }
+        }
+        else
+        {
+            buf.append(message);    
+        }
+
+        conn->send(buf);
+    }
 }
