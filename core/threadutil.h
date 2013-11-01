@@ -6,14 +6,13 @@
 #include <tr1/functional>
 
 #include "nocopyable.h"
+#include "coredefs.h"
 
 namespace tnet
 {
     class Thread : public nocopyable
     {
     public:
-        typedef std::tr1::function<void ()> ThreadFunc_t;
-
         Thread(const ThreadFunc_t& func, const std::string& name = "");
         ~Thread();
         

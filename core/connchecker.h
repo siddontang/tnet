@@ -5,6 +5,8 @@
 #include <tr1/functional>
 #include <vector>
 
+#include "coredefs.h"
+
 namespace tnet
 {
     class IOLoop;
@@ -15,8 +17,6 @@ namespace tnet
     class ConnChecker
     {
     public:
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-
         ConnChecker(const std::vector<IOLoop*>& connLoops, const std::vector<ConnectionPtr_t>& connections);
         ~ConnChecker();
 
@@ -34,7 +34,7 @@ namespace tnet
         void setConnectTimeout(int seconds) { m_connectTimeout = seconds; }
 
     private:
-        void onConnCheck(Timer* timer);
+        void onConnCheck(const TimerPtr_t& timer);
         
     private:
         IOLoopPoolTimer* m_connChecker;

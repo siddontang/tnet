@@ -46,9 +46,7 @@ namespace tnet
             return NULL;    
         }
     
-        typedef std::tr1::function<void ()> Func_t;
-
-        Func_t func;
+        ThreadFunc_t func;
         string name;
     };
 

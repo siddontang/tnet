@@ -9,6 +9,7 @@
 #include "nocopyable.h"
 #include "connevent.h"
 #include "wsevent.h"
+#include "httpdefs.h"
 
 extern "C"
 {
@@ -21,14 +22,14 @@ namespace tnet
     class Address;
     class WsConnection;
     class HttpRequest;
-    class HttpParser;
     class HttpResponse;
     class Connection;
+    class HttpConnection;
 
     class HttpServer : public nocopyable
     {
     public:
-        friend class HttpParser;
+        friend class HttpConnection;
 
         HttpServer(TcpServer* server);
         ~HttpServer();
@@ -41,22 +42,17 @@ namespace tnet
 
         int listen(const Address& addr);
     
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::shared_ptr<WsConnection> WsConnectionPtr_t;
-        typedef std::tr1::shared_ptr<HttpParser> HttpParserPtr_t;
-
-        typedef std::tr1::function<void (const HttpRequest&, const ConnectionPtr_t& conn)> HttpCallback_t;
         void setHttpCallback(const std::string& path, const HttpCallback_t& func);
-
-        typedef std::tr1::function<void (const ConnectionPtr_t&, WsEvent, const std::string)> WsCallback_t;
         void setWsCallback(const std::string& path, const WsCallback_t& func);
 
     private:
-        void onConnectionEvent(const ConnectionPtr_t&, ConnEvent, const char*, size_t);
-        void handleRead(const ConnectionPtr_t& conn, const char* buf, size_t count);
+        void onConnEvent(const ConnectionPtr_t&, ConnEvent, const char*, size_t);
     
-        void onRequest(const ConnectionPtr_t& conn, const HttpRequest& request);
+        void onRequest(const HttpConnectionPtr_t& conn, const HttpRequest& request);
         void onWebsocket(const ConnectionPtr_t& conn, const HttpRequest& request, const char* buffer, size_t count);
+
+        void onHttpConnEvent(const HttpConnectionPtr_t&, const ConnectionPtr_t&, ConnEvent, const char*, size_t);
+        void onWsConnEvent(const WsConnectionPtr_t&, const ConnectionPtr_t&, ConnEvent, const char*, size_t);
 
     private:
         TcpServer* m_server;

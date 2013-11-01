@@ -14,26 +14,10 @@ using namespace tnet;
 using namespace std;
 using namespace std::tr1::placeholders;
 
-typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-
-void onConnEvent(const ConnectionPtr_t& conn, ConnEvent event, const char* buf, int count)
+void onNumConnEvent(IntPtr_t num, const ConnectionPtr_t& conn, ConnEvent event, const char* buf, int count)
 {
-    std::tr1::shared_ptr<int> num = std::tr1::static_pointer_cast<int>(conn->getContext());
-    if(!num)
-    {
-        num = std::tr1::shared_ptr<int>(new int(0));
-        conn->setContext(num);    
-    }
-
     switch(event)
     {
-        case Conn_ConnectingEvent:
-            LOG_INFO("connecting");
-            break;
-        case Conn_ConnectEvent:
-            LOG_INFO("connect");
-            conn->send("Hello World");
-            break;
         case Conn_ReadEvent:
             {
                 if((*num) > 10)
@@ -47,6 +31,23 @@ void onConnEvent(const ConnectionPtr_t& conn, ConnEvent event, const char* buf, 
 
             conn->send(buf, count);
             }
+            break;
+        default:
+            return;    
+    } 
+}
+
+void onConnEvent(const ConnectionPtr_t& conn, ConnEvent event, const char* buf, int count)
+{
+    switch(event)
+    {
+        case Conn_ConnectingEvent:
+            LOG_INFO("connecting");
+            break;
+        case Conn_ConnectEvent:
+            LOG_INFO("connect");
+            conn->setEventCallback(std::tr1::bind(&onNumConnEvent, IntPtr_t(new int(0)), _1, _2, _3, _4));
+            conn->send("Hello World");
             break;
         default:
             return;    

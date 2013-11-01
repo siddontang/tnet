@@ -22,22 +22,10 @@ namespace tnet
 
     static int MaxReadBuffer = 1024 * 4;
 
-    typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-
     static void dummyEventCallback(const ConnectionPtr_t&, ConnEvent, const char*, size_t)
-    {
-    }
-
-    static void dummyReleaseFunc(const ConnectionPtr_t&)
     {}
 
-    typedef std::tr1::function<void (const ConnectionPtr_t&)> ReleaseFunc_t;
-
-    ReleaseFunc_t initReleaseFunc() { return std::tr1::bind(&dummyReleaseFunc, _1); }
-
-    ReleaseFunc_t Connection::ms_releaseFunc = initReleaseFunc();
-
-    Connection::Connection(IOLoop* loop, int sockFd)
+    Connection::Connection(IOLoop* loop, int sockFd, const ConnReleaseFunc_t& func)
         : m_loop(loop)
     {
         m_func = std::tr1::bind(&dummyEventCallback, _1, _2, _3, _4);
@@ -45,6 +33,8 @@ namespace tnet
         m_status = None;
         
         ev_io_init(&m_io, Connection::onData, sockFd, EV_READ);
+
+        m_releaseFunc = func;
     }
 
     Connection::~Connection()
@@ -77,6 +67,8 @@ namespace tnet
         m_io.data = this;
     
         ev_io_start(m_loop->evloop(), &m_io);
+
+        m_func(shared_from_this(), Conn_EstablishEvent, NULL, 0);
     }
    
     void Connection::connect(const Address& addr)
@@ -322,7 +314,7 @@ namespace tnet
    
         m_func(shared_from_this(), Conn_CloseEvent, NULL, 0);
     
-        ms_releaseFunc(shared_from_this());
+        m_releaseFunc(shared_from_this());
     }
 
     void Connection::send(const char* data, int dataLen)

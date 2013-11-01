@@ -10,19 +10,18 @@ using namespace std::tr1::placeholders;
 
 namespace tnet
 {
-    IOLoopPoolTimer::IOLoopPoolTimer(const vector<IOLoop*>& loops, const TimerFunc_t& func, int repeat, int after)
+    IOLoopPoolTimer::IOLoopPoolTimer(const vector<IOLoop*>& loops, const TimerCallback_t& func, int repeat, int after)
         : m_loops(loops)
     {
         m_timers.resize(loops.size());
         for(size_t i = 0; i < loops.size(); ++i)
         {
-            m_timers[i] = new Timer(m_loops[i], func, repeat, after);
+            m_timers[i] = TimerPtr_t(new Timer(m_loops[i], func, repeat, after));
         } 
     }
 
     IOLoopPoolTimer::~IOLoopPoolTimer()
     {
-        for_each_all_delete(m_timers); 
     }
 
     void IOLoopPoolTimer::start()

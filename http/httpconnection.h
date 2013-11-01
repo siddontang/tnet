@@ -1,8 +1,11 @@
-#ifndef _HTTPPARSER_H_
-#define _HTTPPARSER_H_
+#ifndef _HTTPCONNECTION_H_
+#define _HTTPCONNECTION_H_
 
 #include <tr1/memory>
 #include <tr1/functional>
+
+#include <map>
+#include <string>
 
 extern "C"
 {
@@ -10,22 +13,34 @@ extern "C"
 }
 
 #include "connection.h"
-#include "httprequest.h"
 #include "nocopyable.h"
+#include "httpdefs.h"
+#include "httprequest.h"
 
 namespace tnet
 {
     class HttpServer;
+    class HttpRequest;
+    class HttpResponse;
 
     //for http inner use
-    class HttpParser : public nocopyable
+    class HttpConnection : public nocopyable
+                     , public std::tr1::enable_shared_from_this<HttpConnection> 
     {
     public:
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        
-        HttpParser(HttpServer* server, const ConnectionPtr_t& conn);
-        ~HttpParser();
+        friend class HttpServer;
 
+        HttpConnection(HttpServer* server, const ConnectionPtr_t& conn);
+        ~HttpConnection();
+
+        int getSockFd() { return m_fd; }
+
+        void send(HttpResponse& resp);
+        void send(int statusCode);
+        void send(int statusCode, const std::string& body);
+        void send(int statusCode, const std::string& body, const std::map<std::string, std::string>& headers);
+
+    private:
         static void initSettings();
 
         static int onMessageBegin(struct http_parser*);
@@ -48,7 +63,7 @@ namespace tnet
 
         bool validHeaderSize();
 
-        void onConnRead(const ConnectionPtr_t& conn, const char* buffer, size_t count);
+        void onRead(const ConnectionPtr_t& conn, const char* buffer, size_t count);
 
     private:    
         static struct http_parser_settings ms_settings;
@@ -56,6 +71,7 @@ namespace tnet
         HttpServer* m_server;
 
         std::tr1::weak_ptr<Connection> m_conn;
+        int m_fd;
 
         struct http_parser m_parser;
 

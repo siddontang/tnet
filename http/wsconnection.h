@@ -9,6 +9,8 @@
 #include <stdint.h>
 
 #include "wsevent.h"
+#include "httpdefs.h"
+#include "nocopyable.h"
 
 namespace tnet
 {
@@ -18,36 +20,35 @@ namespace tnet
     class Connection;
     class HttpRequest;
 
-    class WsConnection
+    class WsConnection : public nocopyable
+                       , public std::tr1::enable_shared_from_this<WsConnection> 
     {
     public:
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::weak_ptr<Connection> WeakConnectionPtr_t;
+        friend class HttpServer;
 
-        typedef std::tr1::function<void (const ConnectionPtr_t&, WsEvent, const std::string)> EventCallback_t;
-
-        WsConnection(const EventCallback_t& func);
+        WsConnection(const ConnectionPtr_t& conn, const WsCallback_t& func);
         ~WsConnection();
-    
+
+        void ping(const std::string& message);
+        void send(const std::string& message, bool binary);
+        void send(const std::string& message);
+        void close();
+   
+
+    private:    
         int onHandshake(const ConnectionPtr_t& conn, const HttpRequest& request);
 
         ssize_t onRead(const ConnectionPtr_t& conn, const char* data, size_t count);
 
-        static void ping(const ConnectionPtr_t& conn, const std::string& message);
-        static void send(const ConnectionPtr_t& conn, const std::string& message, bool binary = false);
-        static void close(const ConnectionPtr_t& conn);
-   
-        bool textFrame() { m_opcode == 0 ? (m_lastOpcode == 0x1) : (m_opcode == 0x1); }
-        bool binaryFrame() { m_opcode == 0 ? (m_lastOpcode == 0x2) : (m_opcode == 0x2); }
 
-    private:
         void handleError(const ConnectionPtr_t& conn, int statusCode, const std::string& message = "");
         int checkHeader(const ConnectionPtr_t& conn, const HttpRequest& request);
 
         bool isFinalFrame() { return m_final; }
         bool isMaskFrame() { return m_mask; }
-   
         bool isControlFrame() { return m_opcode & 0x08; }
+        bool isTextFrame() { return (m_opcode == 0) ? (m_lastOpcode == 0x1) : (m_opcode == 0x1); }
+        bool isBinaryFrame() { return (m_opcode == 0) ? (m_lastOpcode == 0x2) : (m_opcode == 0x2); }
         
         ssize_t onFrameStart(const char* data, size_t count);
         ssize_t onFramePayloadLen(const char* data, size_t count);
@@ -62,7 +63,7 @@ namespace tnet
         ssize_t handleMessage(const ConnectionPtr_t& conn, uint8_t opcode, const std::string& message);
         ssize_t tryRead(const char* data, size_t count, size_t tryReadData);
     
-        static void sendFrame(const ConnectionPtr_t& conn, bool finalFrame, char opcode, const std::string& message = std::string());
+        void sendFrame(bool finalFrame, char opcode, const std::string& message = std::string());
 
     private:
         enum FrameStatus
@@ -76,6 +77,8 @@ namespace tnet
             FrameFinal,
             FrameError,
         }; 
+        
+        WeakConnectionPtr_t m_conn;
 
         std::string m_frame;
     
@@ -92,7 +95,7 @@ namespace tnet
     
         std::string m_cache;
     
-        EventCallback_t m_func;
+        WsCallback_t m_func;
     
         static bool ms_maskOutgoing;
     };    

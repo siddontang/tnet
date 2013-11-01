@@ -5,6 +5,8 @@
 #include <tr1/functional>
 #include <vector>
 
+#include "coredefs.h"
+
 namespace tnet
 {
     class IOLoop;
@@ -13,10 +15,8 @@ namespace tnet
     class IOLoopPoolTimer
     {
     public:
-        typedef std::tr1::function<void (Timer*)> TimerFunc_t;
-         
         //repeat and after are milliseconds
-        IOLoopPoolTimer(const std::vector<IOLoop*>& loops, const TimerFunc_t& func, int repeat, int after);
+        IOLoopPoolTimer(const std::vector<IOLoop*>& loops, const TimerCallback_t& func, int repeat, int after);
         ~IOLoopPoolTimer();    
 
         void start();
@@ -26,7 +26,7 @@ namespace tnet
 
     private:
         const std::vector<IOLoop*>& m_loops;
-        std::vector<Timer*> m_timers;
+        std::vector<TimerPtr_t> m_timers;
     };    
 }
 

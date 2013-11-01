@@ -10,18 +10,18 @@ extern "C"
 }
 
 #include "nocopyable.h"
+#include "coredefs.h"
 
 namespace tnet
 {
     class IOLoop;
 
     class Timer : public nocopyable
+                , public std::tr1::enable_shared_from_this<Timer> 
     {
     public:
-        typedef std::tr1::function<void (Timer*)> TimerFunc_t;
-
         //repeat and after are milliseconds
-        Timer(IOLoop* loop, const TimerFunc_t& func, int repeat, int after = 0);
+        Timer(IOLoop* loop, const TimerCallback_t& func, int repeat, int after = 0);
         ~Timer();
         
         void start();
@@ -29,8 +29,8 @@ namespace tnet
 
         void reset(int repeat);
 
-        void setContext(const std::tr1::shared_ptr<void>& context) { m_context = context; }
-        std::tr1::shared_ptr<void> getContext() { return m_context; }
+        void setContext(const ContextPtr_t& context) { m_context = context; }
+        ContextPtr_t getContext() { return m_context; }
         void resetContext() { m_context.reset(); }
 
         IOLoop* getLoop() { return m_loop; }
@@ -45,9 +45,9 @@ namespace tnet
     private:
         IOLoop* m_loop;
         struct ev_timer m_timer;
-        TimerFunc_t m_func;
+        TimerCallback_t m_func;
 
-        std::tr1::shared_ptr<void> m_context;
+        ContextPtr_t m_context;
     };
     
 }

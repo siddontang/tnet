@@ -5,7 +5,8 @@ namespace tnet
 {
     enum ConnEvent
     {
-        Conn_ConnectEvent = 0,
+        Conn_EstablishEvent,
+        Conn_ConnectEvent,
         Conn_ConnectingEvent,
         Conn_ReadEvent,
         Conn_WriteCompleteEvent,

@@ -5,7 +5,7 @@
 namespace tnet
 {
 
-    Timer::Timer(IOLoop* loop, const TimerFunc_t& func, int repeat, int after)
+    Timer::Timer(IOLoop* loop, const TimerCallback_t& func, int repeat, int after)
         : m_loop(loop)
     {
         m_func = func;
@@ -76,6 +76,6 @@ namespace tnet
     {
         Timer* timer = (Timer*)w->data;
         
-        (timer->m_func)(timer);    
+        (timer->m_func)(timer->shared_from_this());    
     }
 }

@@ -4,9 +4,8 @@ set(HTTP_SRCS
     httpresponse.cpp
     httpserver.cpp
     httputil.cpp
-    httpparser.cpp
+    httpconnection.cpp
     wsconnection.cpp
-    wsutil.cpp
     )
 
 include_directories(${TNET_SOURCE_DIR}/core)

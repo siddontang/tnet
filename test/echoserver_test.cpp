@@ -10,8 +10,6 @@ using namespace tnet;
 using namespace std;
 using namespace std::tr1::placeholders;
 
-typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-
 void onConnEvent(const ConnectionPtr_t& conn, ConnEvent event, const char* buf, int count)
 {
     switch(event)

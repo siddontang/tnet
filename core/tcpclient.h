@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "connevent.h"
+#include "coredefs.h"
 
 namespace tnet
 {
@@ -19,16 +20,13 @@ namespace tnet
     class TcpClient
     {
     public:
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-
         TcpClient(int loopNum, int connNum);        
         ~TcpClient();
 
         void start();
         void stop();
 
-        typedef std::tr1::function<void (const ConnectionPtr_t&, ConnEvent, const char*, int)> ConnectionFunc_t;
-        int connect(const Address& addr, const ConnectionFunc_t& func);
+        int connect(const Address& addr, const ConnEventCallback_t& func);
 
         const std::vector<IOLoop*>& getLoops() { return m_loops; }
 

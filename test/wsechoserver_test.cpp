@@ -4,18 +4,16 @@
 #include "log.h"
 #include "address.h"
 #include "connection.h"
+#include "wsconnection.h"
 
 #include "wsevent.h"
-#include "wsutil.h"
 
 using namespace std;
 using namespace tnet;
 using namespace std::tr1::placeholders;
 using namespace std::tr1;
 
-typedef shared_ptr<Connection> ConnectionPtr_t;
-
-void onWsCallback(const ConnectionPtr_t& conn, WsEvent event, const string& message)
+void onWsCallback(const WsConnectionPtr_t& conn, WsEvent event, const string& message)
 {
     switch(event)
     {
@@ -27,7 +25,7 @@ void onWsCallback(const ConnectionPtr_t& conn, WsEvent event, const string& mess
             break;
         case Ws_MessageEvent:
             LOG_INFO("websocket message %s", message.c_str());
-            WsUtil::send(conn, message);
+            conn->send("hello " + message);
             break;
         case Ws_PongEvent:
             LOG_INFO("websocket pong");
@@ -38,9 +36,16 @@ void onWsCallback(const ConnectionPtr_t& conn, WsEvent event, const string& mess
     }
 }
 
+void sigHandler(TcpServer* p, int sig)
+{
+    p->stop();    
+}
+
 int main()
 {
     TcpServer s(1, 1, 100);
+
+    s.addSignal(SIGINT, std::tr1::bind(&sigHandler, &s, _1));
     
     HttpServer httpd(&s);
     

@@ -11,6 +11,7 @@ extern "C"
 }
 
 #include "threadutil.h"
+#include "coredefs.h"
 
 namespace tnet
 {
@@ -24,7 +25,6 @@ namespace tnet
         void start();
         void stop();
    
-        typedef std::tr1::function<void ()> Callback_t;      
         void addTask(const Callback_t& func);
 
         void runTask(const Callback_t& func);

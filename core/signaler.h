@@ -10,6 +10,7 @@ extern "C"
 }
 
 #include "nocopyable.h"
+#include "coredefs.h"
 
 namespace tnet
 {
@@ -23,15 +24,13 @@ namespace tnet
         Signaler(IOLoop* loop);
         ~Signaler();   
         
-        typedef std::tr1::function<void (int)> SignalFunc_t;
-
-        void add(int signum, const SignalFunc_t& func);
+        void add(int signum, const SignalCallback_t& func);
         void remove(int signum);
 
         void clear();
 
     private:
-        void addInLoop(int signum, const SignalFunc_t& func);
+        void addInLoop(int signum, const SignalCallback_t& func);
         void removeInLoop(int signum);
         void clearInLoop();
 
@@ -44,7 +43,7 @@ namespace tnet
         {
         public:
             struct ev_signal signal;
-            SignalFunc_t     func;    
+            SignalCallback_t     func;    
         }; 
 
         std::vector<Watcher*> m_watchers;

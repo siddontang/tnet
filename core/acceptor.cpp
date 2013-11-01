@@ -51,7 +51,7 @@ namespace tnet
         m_sockFds.clear();
     }
 
-    int Acceptor::listen(const Address& addr, const NewConnectionFunc_t& func)
+    int Acceptor::listen(const Address& addr, const NewConnCallback_t& func)
     { 
         int sockFd = SockUtil::bindAndListen(addr);
         if(sockFd < 0)

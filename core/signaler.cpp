@@ -17,14 +17,14 @@ namespace tnet
         for_each_all_delete(m_watchers);
     } 
 
-    void Signaler::add(int signum, const SignalFunc_t& func)
+    void Signaler::add(int signum, const SignalCallback_t& func)
     {
         if(signum >= int(m_watchers.size()))
         {
             return;
         }
 
-        IOLoop::Callback_t taskFunc = std::tr1::bind(&Signaler::addInLoop, this, signum, func);
+        Callback_t taskFunc = std::tr1::bind(&Signaler::addInLoop, this, signum, func);
         m_loop->runTask(taskFunc);          
     }
 
@@ -35,17 +35,17 @@ namespace tnet
             return;
         }
 
-        IOLoop::Callback_t func = std::tr1::bind(&Signaler::removeInLoop, this, signum);
+        Callback_t func = std::tr1::bind(&Signaler::removeInLoop, this, signum);
         m_loop->runTask(func);
     }
 
     void Signaler::clear()
     {
-        IOLoop::Callback_t func = std::tr1::bind(&Signaler::clearInLoop, this);
+        Callback_t func = std::tr1::bind(&Signaler::clearInLoop, this);
         m_loop->runTask(func);    
     }
 
-    void Signaler::addInLoop(int signum, const SignalFunc_t& func)
+    void Signaler::addInLoop(int signum, const SignalCallback_t& func)
     {
         if(!m_loop->isMainLoop())
         {

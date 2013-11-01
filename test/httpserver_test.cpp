@@ -13,6 +13,7 @@
 #include "httpserver.h"
 #include "httprequest.h"
 #include "httpresponse.h"
+#include "httpconnection.h"
 #include "misc.h"
 
 using namespace std;
@@ -26,9 +27,7 @@ void sigAction(TcpServer* pServer, int signum)
     pServer->stop();
 }
 
-typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-
-void onHandler(const HttpRequest& request, const ConnectionPtr_t& conn)
+void onHandler(const HttpConnectionPtr_t& conn, const HttpRequest& request)
 {
     HttpResponse resp;
     resp.statusCode = 200;
@@ -40,7 +39,7 @@ void onHandler(const HttpRequest& request, const ConnectionPtr_t& conn)
     //resp.body.append(1600, 'a');
     resp.body.append("Hello World");
 
-    conn->send(resp.dump());
+    conn->send(resp);
 }
 
 int main()

@@ -10,6 +10,7 @@ extern "C"
 }
 
 #include "nocopyable.h"
+#include "coredefs.h"
 
 namespace tnet
 {
@@ -24,9 +25,7 @@ namespace tnet
         Acceptor(int maxLoopNum);    
         ~Acceptor();
 
-        typedef std::tr1::function<void (int)> NewConnectionFunc_t;
-
-        int listen(const Address& addr, const NewConnectionFunc_t& func);
+        int listen(const Address& addr, const NewConnCallback_t& func);
 
         void start();
         void stop();

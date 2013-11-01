@@ -22,14 +22,20 @@ namespace tnet
     //chrome may not support masking, so we only can disable it
     bool WsConnection::ms_maskOutgoing = false;
 
-    WsConnection::WsConnection(const EventCallback_t& func)
+    WsConnection::WsConnection(const ConnectionPtr_t& conn, const WsCallback_t& func)
     {
+        m_conn = conn;
         m_func = func;
+    
+        m_payloadLen = 0;
+        m_final = 0;
+        m_opcode = 0;
+        m_mask = 0;
+        m_lastOpcode = 0;
     }
 
     WsConnection::~WsConnection()
     {
-        LOG_INFO("ws destoryed");
     }
     
     void WsConnection::handleError(const ConnectionPtr_t& conn, int statusCode, const string& message)
@@ -141,7 +147,7 @@ namespace tnet
 
         m_status = FrameStart;
 
-        m_func(conn, Ws_OpenEvent, string());
+        m_func(shared_from_this(), Ws_OpenEvent, string());
 
         return 0;
     }
@@ -197,7 +203,7 @@ namespace tnet
             LOG_ERROR("onReadError");
 
             m_status = FrameError;
-            m_func(conn, Ws_ErrorEvent, string());
+            m_func(shared_from_this(), Ws_ErrorEvent, string());
             
             //an error occur, only to shutdown connection
             conn->shutDown();    
@@ -434,25 +440,25 @@ namespace tnet
         {
             case 0x1:
                 //utf-8 data
-                m_func(conn, Ws_MessageEvent, data);
+                m_func(shared_from_this(), Ws_MessageEvent, data);
                 break;    
             case 0x2:
                 //binary data
-                m_func(conn, Ws_MessageEvent, data);
+                m_func(shared_from_this(), Ws_MessageEvent, data);
                 break;
             case 0x8:
                 //clsoe
-                m_func(conn, Ws_CloseEvent, string());
+                m_func(shared_from_this(), Ws_CloseEvent, string());
                 
                 conn->shutDown();
                 break;
             case 0x9:
                 //ping
-                sendFrame(conn, true, 0xA, data);
+                sendFrame(true, 0xA, data);
                 break;
             case 0xA:
                 //pong
-                m_func(conn, Ws_PongEvent, data);
+                m_func(shared_from_this(), Ws_PongEvent, data);
                 break;
             default:
                 //error
@@ -460,26 +466,37 @@ namespace tnet
         }    
     } 
 
-    void WsConnection::ping(const ConnectionPtr_t& conn, const string& message)
+    void WsConnection::ping(const string& message)
     {
-        sendFrame(conn, true, 0x9, message);
+        sendFrame(true, 0x9, message);
     }
 
-    void WsConnection::send(const ConnectionPtr_t& conn, const string& message, bool binary)
+    void WsConnection::send(const string& message)
+    {
+        send(message, !isTextFrame());     
+    }
+
+    void WsConnection::send(const string& message, bool binary)
     {
         char opcode = binary ? 0x2 : 0x1;
 
         //for utf-8, we assume message is already utf-8
-        sendFrame(conn, true, opcode, message);
+        sendFrame(true, opcode, message);
     }
 
-    void WsConnection::close(const ConnectionPtr_t& conn)
+    void WsConnection::close()
     {
-        sendFrame(conn, true, (char)0x8);    
+        sendFrame(true, (char)0x8);    
     }
 
-    void WsConnection::sendFrame(const ConnectionPtr_t& conn, bool finalFrame, char opcode, const string& message)
+    void WsConnection::sendFrame(bool finalFrame, char opcode, const string& message)
     {
+        ConnectionPtr_t conn = m_conn.lock();
+        if(!conn)
+        {
+            return;    
+        }
+
         string buf;
 
         opcode |= (finalFrame ? 0x80 : 0x00);

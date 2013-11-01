@@ -50,9 +50,7 @@ namespace tnet
    
         //we prealloc connection vector and never change its size
         m_connections.resize(int(m_maxConnections * 1.5) + 1024);
-  
-        Connection::setReleaseFunc(std::tr1::bind(&TcpServer::deleteConnection, this, _1)); 
-   
+
         m_connChecker = new ConnChecker(m_connLoops, m_connections);
     }
     
@@ -67,7 +65,7 @@ namespace tnet
         m_connections.clear();
     }
 
-    void TcpServer::onNewConnection(int sockFd, const ConnectionFunc_t& func)
+    void TcpServer::onNewConnection(int sockFd, const ConnEventCallback_t& func)
     {
         int connNum = __sync_add_and_fetch(&m_curConnections, 1);
 
@@ -84,9 +82,9 @@ namespace tnet
         loop->runTask(std::tr1::bind(&TcpServer::newConnectionInLoop, this, loop, sockFd, func));
     }
 
-    void TcpServer::newConnectionInLoop(IOLoop* loop, int sockFd, const ConnectionFunc_t& func)
+    void TcpServer::newConnectionInLoop(IOLoop* loop, int sockFd, const ConnEventCallback_t& func)
     {
-        ConnectionPtr_t conn(new Connection(loop, sockFd));
+        ConnectionPtr_t conn(new Connection(loop, sockFd, std::tr1::bind(&TcpServer::deleteConnection, this, _1)));
         
         conn->setEventCallback(func); 
         
@@ -124,7 +122,7 @@ namespace tnet
     }
 
 
-    int TcpServer::listen(const Address& addr, const ConnectionFunc_t& func)
+    int TcpServer::listen(const Address& addr, const ConnEventCallback_t& func)
     {
         LOG_INFO("listen %s:%d", addr.ipstr().c_str(), addr.port());
         return m_acceptor->listen(addr, std::tr1::bind(&TcpServer::onNewConnection, this, _1, func));
@@ -135,7 +133,7 @@ namespace tnet
         for_each_all(m_connLoops, std::tr1::bind(&IOLoop::setIOInterval, _1, milliseconds));
     }
     
-    void TcpServer::addSignal(int signum, const SignalFunc_t& func)
+    void TcpServer::addSignal(int signum, const SignalCallback_t& func)
     {
         m_signaler->add(signum, func);   
     }

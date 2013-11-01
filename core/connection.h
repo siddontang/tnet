@@ -10,6 +10,7 @@ extern "C"
 #include <ev.h>    
 }
 
+#include "coredefs.h"
 #include "nocopyable.h"
 #include "connevent.h"
 
@@ -31,16 +32,11 @@ namespace tnet
             Disconnected,
         };
 
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::function<void (const ConnectionPtr_t&, ConnEvent, const char*, size_t)> EventCallback_t;
-        typedef std::tr1::function<void (const ConnectionPtr_t&)> ReleaseFunc_t;
-
-        Connection(IOLoop* loop, int sockFd);
+        Connection(IOLoop* loop, int sockFd, const ConnReleaseFunc_t& func);
         ~Connection();    
 
-        static void setReleaseFunc(const ReleaseFunc_t& func) { ms_releaseFunc = func; }
-
-        void setEventCallback(const EventCallback_t& func) { m_func = func; }
+        void setEventCallback(const ConnEventCallback_t& func) { m_func = func; }
+        const ConnEventCallback_t& getEventCalback() { return m_func; }
 
         void shutDown();
         
@@ -62,10 +58,6 @@ namespace tnet
         IOLoop* getLoop() { return m_loop; }
         
         ev_tstamp getLastUpdate() { return m_lastUpdate; } 
-
-        void setContext(const std::tr1::shared_ptr<void>& context) { m_context = context; }
-        std::tr1::shared_ptr<void> getContext() { return m_context; }
-        void resetContext() { m_context.reset(); }
 
     private:
         static void onData(struct ev_loop*, struct ev_io*, int);
@@ -90,16 +82,13 @@ namespace tnet
         struct ev_io m_io;
 
         Status m_status;
-        
-        EventCallback_t m_func;
+         
+        ev_tstamp m_lastUpdate;
     
         std::string m_sendBuffer;
     
-        ev_tstamp m_lastUpdate;
-    
-        std::tr1::shared_ptr<void> m_context;
-    
-        static ReleaseFunc_t ms_releaseFunc;
+        ConnEventCallback_t m_func;
+        ConnReleaseFunc_t m_releaseFunc;
     };    
 }
 

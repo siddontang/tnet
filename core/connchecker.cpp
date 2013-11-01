@@ -54,13 +54,13 @@ namespace tnet
         m_connChecker->reset(seconds * 1000);
     }
 
-    void ConnChecker::onConnCheck(Timer* timer)
+    void ConnChecker::onConnCheck(const TimerPtr_t& timer)
     {
         IOLoop* loop = timer->getLoop();
-        std::tr1::shared_ptr<int> num = std::tr1::static_pointer_cast<int>(timer->getContext()); 
+        IntPtr_t num = std::tr1::static_pointer_cast<int>(timer->getContext()); 
         if(!num)
         {
-            num = std::tr1::shared_ptr<int>(new int(0));
+            num = IntPtr_t(new int(0));
             timer->setContext(num);    
         }
 

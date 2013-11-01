@@ -36,7 +36,7 @@ namespace tnet
 
     void AcceptLoop::stop()
     {
-        IOLoop::Callback_t func = std::tr1::bind(&AcceptLoop::stopInLoop, this);
+        Callback_t func = std::tr1::bind(&AcceptLoop::stopInLoop, this);
         m_loop->runTask(func);
     }
 
@@ -48,13 +48,13 @@ namespace tnet
         }
     }
 
-    void AcceptLoop::listen(int sockFd, const NewConnectionFunc_t& func)
+    void AcceptLoop::listen(int sockFd, const NewConnCallback_t& func)
     {
-        IOLoop::Callback_t taskFunc = std::tr1::bind(&AcceptLoop::listenInLoop, this, sockFd, func);
+        Callback_t taskFunc = std::tr1::bind(&AcceptLoop::listenInLoop, this, sockFd, func);
         m_loop->runTask(taskFunc);    
     } 
 
-    void AcceptLoop::listenInLoop(int sockFd, const NewConnectionFunc_t& func)
+    void AcceptLoop::listenInLoop(int sockFd, const NewConnCallback_t& func)
     {
         Watcher* watcher = NULL;
         for(size_t i = 0; i < m_watchers.size(); i++)

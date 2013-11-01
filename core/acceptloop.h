@@ -9,6 +9,8 @@ extern "C"
 #include <ev.h>    
 }
 
+#include "coredefs.h"
+
 namespace tnet
 {
     class IOLoop;
@@ -23,13 +25,11 @@ namespace tnet
         void start();
         void stop();
 
-        typedef std::tr1::function<void (int)> NewConnectionFunc_t;
-
-        void listen(int sockFd, const NewConnectionFunc_t& func);
+        void listen(int sockFd, const NewConnCallback_t& func);
     
     private:
         void stopInLoop();
-        void listenInLoop(int sockFd, const NewConnectionFunc_t& func);
+        void listenInLoop(int sockFd, const NewConnCallback_t& func);
 
         static void onAccept(struct ev_loop*, struct ev_io*, int);
      
@@ -40,7 +40,7 @@ namespace tnet
         {
         public:
             struct ev_io io;
-            NewConnectionFunc_t func;    
+            NewConnCallback_t func;    
         };
         
         std::vector<Watcher*> m_watchers;

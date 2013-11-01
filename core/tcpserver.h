@@ -10,6 +10,7 @@
 #include "address.h"
 #include "threadutil.h"
 #include "connevent.h"
+#include "coredefs.h"
 
 namespace tnet 
 {   
@@ -29,10 +30,7 @@ namespace tnet
         TcpServer(int acceptLoopNum, int connLoopNum, int maxConnections);
         ~TcpServer();
       
-        typedef std::tr1::shared_ptr<Connection> ConnectionPtr_t;
-        typedef std::tr1::function<void (const ConnectionPtr_t&, ConnEvent, const char*, int)> ConnectionFunc_t; 
-      
-        int listen(const Address& addr, const ConnectionFunc_t& func);
+        int listen(const Address& addr, const ConnEventCallback_t& func);
        
         void setConnLoopIOInterval(int milliseconds);
 
@@ -40,16 +38,15 @@ namespace tnet
         void setConnCheckStep(int step);
         void setConnTimeout(int seconds);
 
-        typedef std::tr1::function<void (int)> SignalFunc_t;
-        void addSignal(int signum, const SignalFunc_t& func);
+        void addSignal(int signum, const SignalCallback_t& func);
 
         void start();
         void stop();
 
     private:
-        void onNewConnection(int sockFd, const ConnectionFunc_t& func);
+        void onNewConnection(int sockFd, const ConnEventCallback_t& func);
 
-        void newConnectionInLoop(IOLoop* loop, int sockFd, const ConnectionFunc_t& func);
+        void newConnectionInLoop(IOLoop* loop, int sockFd, const ConnEventCallback_t& func);
 
         void deleteConnection(const ConnectionPtr_t& conn);
         void deleteConnectionInLoop(const ConnectionPtr_t& conn);

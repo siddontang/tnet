@@ -24,8 +24,6 @@ namespace tnet
 
         m_connections.resize(int(connNum * 1.5));
 
-        Connection::setReleaseFunc(std::tr1::bind(&TcpClient::deleteConnection, this, _1)); 
-
         m_checker = new ConnChecker(m_pool->getLoops(), m_connections);
     }
 
@@ -47,7 +45,7 @@ namespace tnet
         m_pool->stop();    
     }
 
-    int TcpClient::connect(const Address& addr, const ConnectionFunc_t& func)
+    int TcpClient::connect(const Address& addr, const ConnEventCallback_t& func)
     {
         int fd = SockUtil::create();
         if(fd < 0)
@@ -66,7 +64,7 @@ namespace tnet
 
         IOLoop* loop = m_pool->getHashLoop(fd);
 
-        ConnectionPtr_t conn(new Connection(loop, fd));
+        ConnectionPtr_t conn(new Connection(loop, fd, std::tr1::bind(&TcpClient::deleteConnection, this, _1)));
         
         conn->setEventCallback(func);
         m_connections[fd] = conn;
