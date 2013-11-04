@@ -29,11 +29,14 @@ namespace tnet
         WsConnection(const ConnectionPtr_t& conn, const WsCallback_t& func);
         ~WsConnection();
 
+        int getSockFd() const { return m_fd; }
+
         void ping(const std::string& message);
         void send(const std::string& message, bool binary);
         void send(const std::string& message);
         void close();
-   
+  
+        void shutDown(); 
 
     private:    
         int onHandshake(const ConnectionPtr_t& conn, const HttpRequest& request);
@@ -96,6 +99,8 @@ namespace tnet
         std::string m_cache;
     
         WsCallback_t m_func;
+
+        int m_fd;
     
         static bool ms_maskOutgoing;
     };    

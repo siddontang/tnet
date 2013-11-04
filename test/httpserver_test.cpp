@@ -35,7 +35,7 @@ void onHandler(const HttpConnectionPtr_t& conn, const HttpRequest& request)
     resp.setKeepAlive(true);
     resp.enableDate();
    
-    //resp.body.append("first"); 
+    resp.body.append("first"); 
     //resp.body.append(1600, 'a');
     resp.body.append("Hello World");
 
@@ -46,7 +46,7 @@ int main()
 {
     //Log::rootLog().setLevel(Log::ERROR);
      
-    TcpServer s(2, 4, 1000000);
+    TcpServer s(2, 8, 1000000);
 
     HttpServer httpd(&s);
 

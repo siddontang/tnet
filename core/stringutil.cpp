@@ -16,8 +16,12 @@ using namespace std;
 namespace tnet
 {
 
-    vector<string> StringUtil::split(const string& src, const string& delim)
+    vector<string> StringUtil::split(const string& src, const string& delim, size_t maxParts)
     {
+        if(maxParts == 0)
+        {
+            maxParts = size_t(-1);    
+        }
         size_t lastPos = 0;
         size_t pos = 0;
         size_t size = src.size();
@@ -34,7 +38,15 @@ namespace tnet
 
             if(pos - lastPos > 0)
             {
-                tokens.push_back(src.substr(lastPos, pos - lastPos));    
+                if(tokens.size() == maxParts - 1)
+                {
+                    tokens.push_back(src.substr(lastPos));    
+                    break;
+                }
+                else
+                {
+                    tokens.push_back(src.substr(lastPos, pos - lastPos));    
+                }
             }
 
             lastPos = pos + 1;

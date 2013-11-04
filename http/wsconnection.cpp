@@ -24,6 +24,8 @@ namespace tnet
 
     WsConnection::WsConnection(const ConnectionPtr_t& conn, const WsCallback_t& func)
     {
+        m_fd = conn->getSockFd();
+
         m_conn = conn;
         m_func = func;
     
@@ -550,5 +552,14 @@ namespace tnet
         }
 
         conn->send(buf);
+    }
+
+    void WsConnection::shutDown()
+    {
+        ConnectionPtr_t conn = m_conn.lock();
+        if(conn)
+        {
+            conn->shutDown();    
+        }    
     }
 }

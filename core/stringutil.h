@@ -10,9 +10,8 @@ namespace tnet
     class StringUtil
     {
     public:
-        static std::vector<std::string> split(const std::string& src, const std::string& delim);
+        static std::vector<std::string> split(const std::string& src, const std::string& delim, size_t maxParts = size_t(-1));
         static uint32_t hash(const std::string& str);
-
 
         static std::string lower(const std::string& src);
         static std::string upper(const std::string& src);
