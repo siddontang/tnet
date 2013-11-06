@@ -49,3 +49,23 @@ add_library(tnet_core ${SRCS})
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 target_link_libraries(tnet_core ${DEP_LIB})
+
+install(TARGETS tnet_core DESTINATION lib)
+
+set(HEADERS
+    address.h
+    connection.h
+    connevent.h
+    coredefs.h
+    log.h
+    misc.h
+    nocopyable.h
+    sockutil.h
+    stringutil.h
+    tcpclient.h
+    tcpserver.h
+    threadutil.h
+    timer.h
+    )
+
+install(FILES ${HEADERS} DESTINATION include/tnet)
