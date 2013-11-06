@@ -28,6 +28,11 @@ namespace tnet
         conn->send(resp);      
     } 
 
+    int dummyAuthCallback(const HttpRequest&)
+    {
+        return 0;    
+    }
+
     HttpServer::HttpServer(TcpServer* server)
         : m_server(server)
         , m_maxHeaderSize(DefaultMaxHeaderSize)
@@ -36,6 +41,8 @@ namespace tnet
         HttpConnection::initSettings();
     
         m_httpFuncs[rootPath] = std::tr1::bind(&httpNotFoundCallback, _1, _2);
+    
+        m_authFunc = std::tr1::bind(&dummyAuthCallback, _1);
     }
    
     HttpServer::~HttpServer()
@@ -134,5 +141,15 @@ namespace tnet
            
             return;
         }
+    }
+
+    int HttpServer::onAuth(const HttpRequest& request)
+    {
+        if(m_authFunc(request) != 0)
+        {
+            return -1;         
+        }    
+
+        return 0;
     }
 }

@@ -22,6 +22,7 @@ namespace tnet
     typedef std::tr1::shared_ptr<HttpConnection> HttpConnectionPtr_t;
     typedef std::tr1::weak_ptr<HttpConnection> WeakHttpConnectionPtr_t;
 
+    typedef std::tr1::function<int (const HttpRequest&)> AuthCallback_t;
     typedef std::tr1::function<void (const HttpConnectionPtr_t&, const HttpRequest&)> HttpCallback_t;
     typedef std::tr1::function<void (const WsConnectionPtr_t&, WsEvent, const std::string&)> WsCallback_t;
 }

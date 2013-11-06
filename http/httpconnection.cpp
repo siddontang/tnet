@@ -145,6 +145,17 @@ namespace tnet
         
     int HttpConnection::handleHeadersComplete()
     {
+        m_request.parseUrl();
+
+        m_request.majorVersion = m_parser.http_major;
+        m_request.minorVersion = m_parser.http_minor;
+        m_request.method = (http_method)m_parser.method;
+    
+        if(m_server->onAuth(m_request) != 0)
+        {
+            return -1;    
+        }
+
         return 0;
     }
         
@@ -162,12 +173,6 @@ namespace tnet
         
     int HttpConnection::handleMessageComplete()
     {
-        m_request.parseUrl();
-
-        m_request.majorVersion = m_parser.http_major;
-        m_request.minorVersion = m_parser.http_minor;
-        m_request.method = (http_method)m_parser.method;
-        
         if(!m_parser.upgrade)
         {
             ConnectionPtr_t conn = m_conn.lock();

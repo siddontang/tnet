@@ -41,6 +41,10 @@ namespace tnet
         int getMaxBodySize() { return m_maxBodySize; }
 
         int listen(const Address& addr);
+
+        //when server receive full headers(include websocket)
+        //you may check this request's validity
+        void setAuthCallback(const AuthCallback_t& func) { m_authFunc = func; }
     
         void setHttpCallback(const std::string& path, const HttpCallback_t& func);
         void setWsCallback(const std::string& path, const WsCallback_t& func);
@@ -48,6 +52,7 @@ namespace tnet
     private:
         void onConnEvent(const ConnectionPtr_t&, ConnEvent, const char*, size_t);
     
+        int onAuth(const HttpRequest& request);
         void onRequest(const HttpConnectionPtr_t& conn, const HttpRequest& request);
         void onWebsocket(const ConnectionPtr_t& conn, const HttpRequest& request, const char* buffer, size_t count);
 
@@ -63,6 +68,8 @@ namespace tnet
         std::map<std::string, HttpCallback_t> m_httpFuncs;        
 
         std::map<std::string, WsCallback_t> m_wsFuncs;
+
+        AuthCallback_t m_authFunc;
     };
     
 }
